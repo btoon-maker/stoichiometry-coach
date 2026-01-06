@@ -18,6 +18,9 @@
 *{ box-sizing:border-box; }
 html,body{ margin:0; padding:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--gray-1); background:var(--gray-7); }
 
+/* ✅ prevents bottom content from being cut off on some screens/browsers */
+body{ padding-bottom: 90px; }
+
 .topbar{
   background: linear-gradient(90deg, var(--asu-maroon), #6f1732);
   color:var(--asu-white);
@@ -55,7 +58,14 @@ h1{ margin:0; font-size:22px; letter-spacing:.2px; }
   font-weight:700;
 }
 
-.container{ max-width:1100px; margin:18px auto; padding:0 16px 30px; display:grid; gap:16px; }
+.container{
+  max-width:1100px;
+  margin:18px auto;
+  padding:0 16px 90px; /* ✅ extra bottom space */
+  display:grid;
+  gap:16px;
+}
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -67,6 +77,15 @@ h2{ margin:0 0 10px; font-size:18px; }
 .h3{ margin:0 0 8px; font-size:15px; }
 
 label{ display:block; font-size:13px; color:var(--gray-2); margin:8px 0 6px; }
+
+/* ✅ stand-out label (requested) */
+.labelStrong{
+  font-weight: 1000;
+  color: var(--gray-1);
+  font-size: 15px;
+  letter-spacing: .2px;
+  margin-top: 10px;
+}
 
 select, .input{
   width:100%;
@@ -161,7 +180,10 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   background:#fff;
 }
 
-/* Step 1 checkboxes across */
+.lastStep{
+  padding-bottom: 28px; /* ✅ extra space inside last step */
+}
+
 .pathChecks{
   display:grid;
   gap:10px;
@@ -201,13 +223,13 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   background: var(--gray-7);
 }
 
-/* True horizontal DA line */
+/* ✅ NO SCROLLING: wrap instead of overflow scrolling */
 .daLine{
   display:flex;
   align-items:center;
   gap:12px;
-  flex-wrap:nowrap;
-  overflow-x:auto;
+  flex-wrap:wrap;         /* ✅ wraps to next line */
+  overflow: visible;      /* ✅ no scrollbars */
   padding-bottom:6px;
 }
 
@@ -239,7 +261,7 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   display:flex;
   align-items:center;
   gap:12px;
-  flex: 0 0 auto;
+  flex-wrap:wrap;   /* ✅ slots can wrap too */
 }
 
 .slot{
@@ -266,7 +288,6 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   flex: 0 0 auto;
 }
 
-/* Factor bank across */
 .bank{
   display:grid;
   gap:10px;
@@ -277,9 +298,6 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   flex-wrap:wrap;
   align-items:flex-start;
 }
-.bankRow .factor{
-  width: 260px;
-}
 
 .factor{
   border:1px solid var(--border);
@@ -287,16 +305,9 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   padding:10px;
   background:#fff;
   cursor:grab;
+  width: 260px;
 }
 .factor:active{ cursor:grabbing; }
-
-/* neutral (no maroon headings) */
-.factorTitle{
-  font-weight:900;
-  margin-bottom:8px;
-  color: var(--gray-1);
-  font-size:13px;
-}
 
 .placed{ width:100%; }
 .placedInner{
@@ -326,14 +337,13 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   color:var(--asu-maroon);
 }
 
-/* neutral tag used to avoid showing the answer in Step 2 */
 .unitTagNeutral{
   border-color: rgba(0,0,0,.12);
   background: rgba(0,0,0,.04);
   color: var(--gray-2);
 }
 
-/* --- Step 3: Calculation card --- */
+/* Step 3 */
 .calcCard{
   margin-top:10px;
   border:1px solid var(--border);
@@ -354,8 +364,6 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   margin-bottom:8px;
 }
 
-.calcLineWrap{ overflow-x:auto; padding-bottom:4px; }
-
 .calcLine{
   font-weight:900;
   font-size:16px;
@@ -370,18 +378,7 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   background: rgba(255,198,39,.20);
 }
 
-.calcVals{
-  color: var(--asu-maroon);
-}
-
-.calcOp{
-  margin:0 10px;
-  color: var(--gray-2);
-}
-
-.finalAnswerArea{
-  margin-top:12px;
-}
+.finalAnswerArea{ margin-top:12px; }
 
 .finalInputs{
   display:grid;
