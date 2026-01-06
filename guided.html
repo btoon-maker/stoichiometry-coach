@@ -17,8 +17,8 @@
     </div>
     <nav class="nav">
       <a class="navlink" href="index.html">Mole Map Coach</a>
-      <a class="navlink" href="practice.html">Independent Practice</a>
       <a class="navlink active" href="guided.html">Guided Practice</a>
+      <a class="navlink" href="practice.html">Independent Practice</a>
     </nav>
   </header>
 
@@ -46,12 +46,13 @@
         <div class="guidedCol">
           <h3 class="h3">Step 2: Build the setup</h3>
           <p class="muted">
-            Drag a factor into each slot. If it’s upside down, click <strong>Flip</strong>.
-            Your units should cancel.
+            Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
+            Use the <strong>×</strong> signs as a reminder to multiply across.
           </p>
 
           <div class="equationBox">
-            <div class="daRow">
+            <div class="daLine" aria-label="Dimensional analysis setup line">
+              <!-- GIVEN -->
               <div class="givenBox">
                 <div class="frac">
                   <div class="num"><input id="givenValue" class="input small" /></div>
@@ -60,9 +61,15 @@
                 </div>
               </div>
 
-              <div class="slots" id="slots"></div>
+              <span class="times" aria-hidden="true">×</span>
 
-              <div class="equals">
+              <!-- SLOTS (rendered by JS, includes × between slots) -->
+              <div id="slots" class="slotsHoriz"></div>
+
+              <span class="times" aria-hidden="true">=</span>
+
+              <!-- TARGET UNIT TAG -->
+              <div class="equalsBox">
                 <span class="unitTag" id="targetUnitTag">? ?</span>
               </div>
             </div>
@@ -85,7 +92,7 @@
             <summary>How the tool checks you</summary>
             <ul class="bullets">
               <li>It confirms you chose the correct path moves.</li>
-              <li>It checks that each factor is the right kind (molar mass, mole ratio, etc.).</li>
+              <li>It checks each factor type (molar mass, mole ratio, etc.).</li>
               <li>It checks orientation so units cancel in the correct direction.</li>
             </ul>
           </details>
