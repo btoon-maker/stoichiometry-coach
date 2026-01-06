@@ -1,7 +1,3 @@
-// guided.js
-// Step 2: check setup ONLY (no final unit/answer shown)
-// Step 3: student enters final number; "Show expected answer" reveals correct calculated grams
-
 let DATA = null;
 
 const state = {
@@ -57,8 +53,9 @@ function renderPathChecks() {
   items.forEach(item => {
     const row = document.createElement("label");
     row.className = "checkRow";
+    // ✅ unchecked by default
     row.innerHTML = `
-      <input type="checkbox" id="${item.id}" checked />
+      <input type="checkbox" id="${item.id}" />
       <span><strong>${item.label}</strong></span>
     `;
     wrap.appendChild(row);
@@ -79,7 +76,7 @@ function makeFactorCard(factor) {
   div.draggable = true;
   div.dataset.factorId = factor.id;
 
-  // ✅ No titles (per request)
+  // No titles
   div.innerHTML = `
     <div class="frac mini">
       <div class="num">${factor.top}</div>
@@ -166,7 +163,6 @@ function renderSlots() {
     }
   }
 
-  // wire buttons
   slotsWrap.querySelectorAll("button").forEach(btn => {
     btn.addEventListener("click", () => {
       const action = btn.dataset.action;
@@ -201,7 +197,7 @@ function setupIsCorrect() {
 
 function checkSetup() {
   if (!checkPath()) {
-    setSetupFeedback("First, select the full path: <strong>convert → ratio → convert</strong>.", false);
+    setSetupFeedback("Select the full path first: <strong>convert → ratio → convert</strong>.", false);
     return;
   }
 
@@ -258,11 +254,6 @@ function buildGuidedProblem() {
   const mmReact = toNum(rxn.species[react.sp].molarMass);
   const mmProd = toNum(rxn.species[prod.sp].molarMass);
 
-  // Robust guard
-  if (!Number.isFinite(mmReact) || !Number.isFinite(mmProd)) {
-    throw new Error("Invalid molar mass data in problems.json for selected species.");
-  }
-
   const ratioTop = `${prod.coef} mol ${prod.sp}`;
   const ratioBottom = `${react.coef} mol ${react.sp}`;
 
@@ -272,43 +263,13 @@ function buildGuidedProblem() {
     (mmProd);
 
   const factorBank = [
-    {
-      id: "mm_in",
-      type: "mm_in",
-      top: `1 mol ${react.sp}`,
-      bottom: `${mmReact} g ${react.sp}`,
-      flipped: false
-    },
-    {
-      id: "ratio",
-      type: "ratio",
-      top: ratioTop,
-      bottom: ratioBottom,
-      flipped: false
-    },
-    {
-      id: "mm_out",
-      type: "mm_out",
-      top: `${mmProd} g ${prod.sp}`,
-      bottom: `1 mol ${prod.sp}`,
-      flipped: false
-    },
+    { id: "mm_in", top: `1 mol ${react.sp}`, bottom: `${mmReact} g ${react.sp}`, flipped: false },
+    { id: "ratio", top: ratioTop, bottom: ratioBottom, flipped: false },
+    { id: "mm_out", top: `${mmProd} g ${prod.sp}`, bottom: `1 mol ${prod.sp}`, flipped: false },
 
     // distractors
-    {
-      id: "mm_in_wrong",
-      type: "mm_in_wrong",
-      top: `1 mol ${prod.sp}`,
-      bottom: `${mmProd} g ${prod.sp}`,
-      flipped: false
-    },
-    {
-      id: "ratio_flipped",
-      type: "ratio_flipped",
-      top: ratioBottom,
-      bottom: ratioTop,
-      flipped: false
-    }
+    { id: "mm_in_wrong", top: `1 mol ${prod.sp}`, bottom: `${mmProd} g ${prod.sp}`, flipped: false },
+    { id: "ratio_flipped", top: ratioBottom, bottom: ratioTop, flipped: false }
   ];
 
   const prompt = `A reaction occurs: <strong>${rxn.equation}</strong><br>
@@ -330,8 +291,8 @@ function renderProblem() {
   document.getElementById("givenValue").value = String(state.problem.givenGrams);
   document.getElementById("givenUnit").textContent = `g ${state.problem.react.sp}`;
 
-  // Step 2 neutral
-  document.getElementById("targetUnitTag").textContent = "final";
+  // ✅ show target unit (not answer)
+  document.getElementById("targetUnitTag").textContent = `g ${state.problem.prod.sp}`;
 
   renderPathChecks();
   renderBank();
@@ -369,14 +330,13 @@ function checkFinal() {
     setFinalFeedback(
       `❌ Not yet — your answer is a bit <strong>too ${dir}</strong>.<br>
        Expected about <strong>${expected.toFixed(3)}</strong> g.<br>
-       Tip: re-check (1) molar mass placement, (2) mole ratio direction, and (3) multiply tops then divide by bottoms.`,
+       Tip: multiply tops then divide by bottoms, and re-check your mole ratio direction.`,
       false
     );
   }
 }
 
 function revealFinal() {
-  // ✅ Always shows the correct expected answer for the current problem
   const expected = state.problem.correctGrams;
   setFinalFeedback(`Expected about <strong>${expected.toFixed(3)}</strong> g.`, null);
 }
