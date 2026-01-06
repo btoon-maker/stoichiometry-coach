@@ -31,7 +31,6 @@
 
       <div id="guidedProblemText" class="problemText"></div>
 
-      <!-- NEW: stacked layout -->
       <div class="guidedStack">
         <!-- STEP 1 -->
         <div class="guidedRow">
@@ -55,18 +54,25 @@
 
           <div class="equationBox">
             <div class="daLine" aria-label="Dimensional analysis setup line">
-              <!-- GIVEN -->
+              <!-- GIVEN (unit tag moved to numerator) -->
               <div class="givenBox">
                 <div class="frac">
-                  <div class="num"><input id="givenValue" class="input small" /></div>
+                  <div class="num">
+                    <input id="givenValue" class="input small" />
+                    <div style="margin-top:8px;">
+                      <span id="givenUnit" class="unitTag">g A</span>
+                    </div>
+                  </div>
                   <div class="bar"></div>
-                  <div class="den"><span id="givenUnit" class="unitTag">g A</span></div>
+                  <div class="den">
+                    <span class="muted" style="font-weight:800;">1</span>
+                  </div>
                 </div>
               </div>
 
               <span class="times" aria-hidden="true">×</span>
 
-              <!-- SLOTS (rendered by JS; includes × between slot boxes) -->
+              <!-- SLOTS -->
               <div id="slots" class="slotsHoriz"></div>
 
               <span class="times" aria-hidden="true">=</span>
