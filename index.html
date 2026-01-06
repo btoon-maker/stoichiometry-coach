@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stoichiometry Mole Map Coach</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Stoichiometry Coach</h1>
+        <p class="subtitle">Use the Mole Map to choose the right path — then practice.</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="navlink active" href="index.html">Mole Map Coach</a>
+      <a class="navlink" href="practice.html">Practice Generator</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>1) Choose your starting point and your target</h2>
+      <p class="muted">
+        This tool reveals stoichiometry in <strong>three moves</strong>: convert → ratio → convert.
+      </p>
+
+      <div class="grid2">
+        <div>
+          <label for="start">I have…</label>
+          <select id="start">
+            <option value="gramsA">Mass (grams) of Substance A</option>
+            <option value="molesA">Moles of Substance A</option>
+            <option value="particlesA">Particles of Substance A</option>
+            <option value="litersA">Liters of gas A (at STP)</option>
+          </select>
+        </div>
+        <div>
+          <label for="target">I need…</label>
+          <select id="target">
+            <option value="gramsB">Mass (grams) of Substance B</option>
+            <option value="molesB">Moles of Substance B</option>
+            <option value="particlesB">Particles of Substance B</option>
+            <option value="litersB">Liters of gas B (at STP)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="buildPath" class="btn primary">Show my path</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+
+      <div id="pathArea" class="pathArea" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h2>2) Mole Map (reference)</h2>
+      <p class="muted">
+        Tip: If you get stuck, focus on one goal at a time: “Do I have moles yet?”
+      </p>
+
+      <div class="mapWrap">
+        <img src="assets/mole-map.png" alt="Stoichiometry Mole Map" class="moleMap" />
+      </div>
+
+      <details class="note">
+        <summary>Optional: Add your quick help videos</summary>
+        <p class="muted">
+          In <code>app.js</code>, you can paste links for each step (grams→moles, moles→particles, etc.).
+          The coach will show them as “Watch a quick example”.
+        </p>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>What students should remember</h2>
+      <ul class="bullets">
+        <li><strong>Convert to moles</strong> if you aren’t already in moles.</li>
+        <li><strong>Mole ratio</strong> always comes from the balanced equation coefficients.</li>
+        <li><strong>Convert out</strong> to the unit asked for (grams, particles, liters).</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="muted">Built for GitHub Pages • ASU colors applied</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
