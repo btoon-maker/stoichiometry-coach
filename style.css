@@ -394,3 +394,21 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   display:grid;
   gap:10px;
 }
+/* --- Guided Step 2: keep everything on one line & aligned --- */
+.noWrapLine{
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;  /* only if needed */
+  overflow-y: hidden !important;
+  white-space: nowrap;
+}
+
+.noWrapSlots{
+  flex-wrap: nowrap !important;
+}
+
+.noWrapLine .times,
+.noWrapLine .givenBox,
+.noWrapLine .equalsBox,
+.noWrapLine .slot{
+  flex: 0 0 auto;
+}
