@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Guided Practice Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Guided Practice Generator</h1>
+        <p class="subtitle">Build the dimensional analysis setup — drag factors, flip them, and cancel units.</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="navlink" href="index.html">Mole Map Coach</a>
+      <a class="navlink" href="practice.html">Independent Practice</a>
+      <a class="navlink active" href="guided.html">Guided Practice</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="row-between">
+        <h2>Guided problem</h2>
+        <button id="newGuided" class="btn">New problem</button>
+      </div>
+
+      <div id="guidedProblemText" class="problemText"></div>
+
+      <div class="guidedGrid">
+        <div class="guidedCol">
+          <h3 class="h3">Step 1: Choose the path</h3>
+          <p class="muted">Pick which moves you need from the Mole Map.</p>
+
+          <div class="pathChecks" id="pathChecks"></div>
+
+          <div class="miniNote">
+            <strong>Goal:</strong> Your path should be convert → ratio → convert.
+          </div>
+        </div>
+
+        <div class="guidedCol">
+          <h3 class="h3">Step 2: Build the setup</h3>
+          <p class="muted">
+            Drag a factor into each slot. If it’s upside down, click <strong>Flip</strong>.
+            Your units should cancel.
+          </p>
+
+          <div class="equationBox">
+            <div class="daRow">
+              <div class="givenBox">
+                <div class="frac">
+                  <div class="num"><input id="givenValue" class="input small" /></div>
+                  <div class="bar"></div>
+                  <div class="den"><span id="givenUnit" class="unitTag">g A</span></div>
+                </div>
+              </div>
+
+              <div class="slots" id="slots"></div>
+
+              <div class="equals">
+                <span class="unitTag" id="targetUnitTag">? ?</span>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="checkSetup" class="btn primary">Check my setup</button>
+              <button id="showCorrectSetup" class="btn">Show correct setup</button>
+            </div>
+
+            <div id="setupFeedback" class="feedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="guidedCol">
+          <h3 class="h3">Factor bank</h3>
+          <p class="muted">Drag these into the slots.</p>
+          <div id="bank" class="bank"></div>
+
+          <details class="note">
+            <summary>How the tool checks you</summary>
+            <ul class="bullets">
+              <li>It confirms you chose the correct path moves.</li>
+              <li>It checks that each factor is the right kind (molar mass, mole ratio, etc.).</li>
+              <li>It checks orientation so units cancel in the correct direction.</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="muted">Guided Practice focuses on setup + unit cancellation (not just the final answer).</span>
+  </footer>
+
+  <script src="guided.js"></script>
+</body>
+</html>
