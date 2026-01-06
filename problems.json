@@ -1,0 +1,32 @@
+{
+  "reactions": [
+    {
+      "id": "R1",
+      "equation": "2 H2 + O2 -> 2 H2O",
+      "species": {
+        "H2": { "molarMass": 2.016 },
+        "O2": { "molarMass": 31.998 },
+        "H2O": { "molarMass": 18.015 }
+      }
+    },
+    {
+      "id": "R2",
+      "equation": "N2 + 3 H2 -> 2 NH3",
+      "species": {
+        "N2": { "molarMass": 28.014 },
+        "H2": { "molarMass": 2.016 },
+        "NH3": { "molarMass": 17.031 }
+      }
+    },
+    {
+      "id": "R3",
+      "equation": "CH4 + 2 O2 -> CO2 + 2 H2O",
+      "species": {
+        "CH4": { "molarMass": 16.043 },
+        "O2": { "molarMass": 31.998 },
+        "CO2": { "molarMass": 44.009 },
+        "H2O": { "molarMass": 18.015 }
+      }
+    }
+  ]
+}
