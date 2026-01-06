@@ -1,6 +1,8 @@
-// Guided Practice Generator (MVP)
-// Focus: grams of A -> grams of B with 3-factor setup
+// Guided Practice Generator
+// Focus: grams of reactant -> grams of product with 3-factor setup
 // Students drag factors into slots and flip orientation for unit cancellation.
+// Step 2 checks setup ONLY (does not show target unit/answer).
+// Step 3 teaches grouped multiplication and checks the final numeric answer.
 
 let DATA = null;
 
@@ -172,6 +174,12 @@ function buildGuidedProblem(){
   const ratioTop = `${prod.coef} mol ${prod.sp}`;
   const ratioBottom = `${react.coef} mol ${react.sp}`;
 
+  // correct answer (grams product)
+  const correctGrams =
+    (givenGrams / mmReact) *
+    (prod.coef / react.coef) *
+    (mmProd);
+
   const factorBank = [
     // correct factors
     {
@@ -220,7 +228,7 @@ function buildGuidedProblem(){
 
   const prompt = `A reaction occurs: <strong>${rxn.equation}</strong><br>
     If you start with <strong>${givenGrams} g</strong> of <strong>${react.sp}</strong>,
-    build the setup to find <strong>grams</strong> of <strong>${prod.sp}</strong> produced (assume excess).`;
+    build the setup to find <strong>grams</strong> of product produced (assume excess).`;
 
   const correct = [
     { id: "mm_in", flipped: false },
@@ -228,11 +236,17 @@ function buildGuidedProblem(){
     { id: "mm_out", flipped: false }
   ];
 
-  return { rxn, react, prod, givenGrams, mmReact, mmProd, prompt, factorBank, correct };
+  return { rxn, react, prod, givenGrams, mmReact, mmProd, prompt, factorBank, correct, correctGrams };
 }
 
 function setSetupFeedback(msg, ok=null){
   const box = document.getElementById("setupFeedback");
+  box.className = "feedback" + (ok === true ? " good" : ok === false ? " bad" : "");
+  box.innerHTML = msg;
+}
+
+function setFinalFeedback(msg, ok=null){
+  const box = document.getElementById("finalFeedback");
   box.className = "feedback" + (ok === true ? " good" : ok === false ? " bad" : "");
   box.innerHTML = msg;
 }
@@ -242,6 +256,21 @@ function checkPath(){
   const b = document.getElementById("ratio").checked;
   const c = document.getElementById("convertOut").checked;
   return a && b && c;
+}
+
+function setupIsCorrect(){
+  if (!checkPath()) return false;
+  for (let i=0; i<3; i++){
+    if (!state.slots[i]) return false;
+  }
+  const expected = state.problem.correct;
+  for (let i=0; i<3; i++){
+    const placed = state.slots[i];
+    const need = expected[i];
+    if (placed.id !== need.id) return false;
+    if (placed.flipped !== need.flipped) return false;
+  }
+  return true;
 }
 
 function checkSetup(){
@@ -278,7 +307,7 @@ function checkSetup(){
     return;
   }
 
-  setSetupFeedback("✅ Setup correct! Your units cancel properly. Now multiply across the top and divide by the bottom.", true);
+  setSetupFeedback("✅ Setup correct! Units cancel properly. Now go to <strong>Step 3</strong> to multiply/divide and check your final answer.", true);
 }
 
 function showCorrectSetup(){
@@ -291,12 +320,83 @@ function showCorrectSetup(){
   setSetupFeedback("Here’s the correct setup. Notice how the units cancel step-by-step.", null);
 }
 
+function formatVal(n){
+  // show cleaner numbers (molar masses already have 3 decimals in JSON typically)
+  const s = Number(n).toString();
+  return s;
+}
+
+function updateStep3Numbers(){
+  // We show the "numbers only" idea based on the correct calculation.
+  // Numerators: givenGrams, prodCoef, mmProd (and 1s omitted)
+  // Denominators: mmReact, reactCoef (and 1s omitted)
+  const g = state.problem.givenGrams;
+  const mmR = state.problem.mmReact;
+  const mmP = state.problem.mmProd;
+  const reactCoef = state.problem.react.coef;
+  const prodCoef = state.problem.prod.coef;
+
+  const nums = [g, prodCoef, mmP].filter(v => v !== 1);
+  const dens = [mmR, reactCoef].filter(v => v !== 1);
+
+  document.getElementById("numVals").textContent = nums.map(formatVal).join(" × ");
+  document.getElementById("denVals").textContent = dens.map(formatVal).join(" × ");
+
+  // Clear final answer box/feedback for new problem
+  document.getElementById("finalAnswer").value = "";
+  setFinalFeedback("Enter your final number and click <strong>Check my final answer</strong>.", null);
+}
+
+function checkFinal(){
+  if (!setupIsCorrect()){
+    setFinalFeedback("First, make sure your <strong>setup is correct</strong> in Step 2 (units cancel). Then calculate your final number here.", false);
+    return;
+  }
+
+  const raw = document.getElementById("finalAnswer").value.trim().replace(/,/g, "");
+  const userVal = Number(raw);
+
+  if (!Number.isFinite(userVal)){
+    setFinalFeedback("Type a number (example: <strong>31.5</strong>).", false);
+    return;
+  }
+
+  const expected = state.problem.correctGrams;
+
+  // tolerance: 1.5% or 0.05 g (whichever is larger)
+  const tol = Math.max(0.05, expected * 0.015);
+  const diff = Math.abs(userVal - expected);
+
+  if (diff <= tol){
+    setFinalFeedback(`✅ Correct! (Expected about <strong>${expected.toFixed(3)}</strong> g.)`, true);
+  } else {
+    // gentle nudge: too high/low + likely step issue
+    const dir = userVal > expected ? "high" : "low";
+    setFinalFeedback(
+      `❌ Not yet — your answer is a bit <strong>too ${dir}</strong>.<br>
+       Expected about <strong>${expected.toFixed(3)}</strong> g.<br>
+       Tip: re-check (1) molar mass placement, (2) mole ratio direction, and (3) that you multiplied all top values and divided by all bottom values.`,
+      false
+    );
+  }
+}
+
+function revealFinal(){
+  if (!setupIsCorrect()){
+    setFinalFeedback("You can reveal the expected answer, but try to get your <strong>setup correct</strong> first so this helps you learn the pattern.", null);
+  }
+  const expected = state.problem.correctGrams;
+  setFinalFeedback(`Expected about <strong>${expected.toFixed(3)}</strong> g. Use this to diagnose where your setup/calculation went off.`, null);
+}
+
 function renderProblem(){
   document.getElementById("guidedProblemText").innerHTML = state.problem.prompt;
 
   document.getElementById("givenValue").value = String(state.problem.givenGrams);
   document.getElementById("givenUnit").textContent = `g ${state.problem.react.sp}`;
-  document.getElementById("targetUnitTag").textContent = `g ${state.problem.prod.sp}`;
+
+  // Step 2: DO NOT show the product/answer unit anymore
+  document.getElementById("targetUnitTag").textContent = "final";
 
   renderPathChecks();
   renderBank();
@@ -305,6 +405,8 @@ function renderProblem(){
   renderSlots();
 
   setSetupFeedback("Drag factors into each box, then click <strong>Check my setup</strong>.", null);
+
+  updateStep3Numbers();
 }
 
 async function init(){
@@ -318,6 +420,9 @@ async function init(){
 
   document.getElementById("checkSetup").addEventListener("click", checkSetup);
   document.getElementById("showCorrectSetup").addEventListener("click", showCorrectSetup);
+
+  document.getElementById("checkFinal").addEventListener("click", checkFinal);
+  document.getElementById("revealFinal").addEventListener("click", revealFinal);
 
   state.problem = buildGuidedProblem();
   renderProblem();
