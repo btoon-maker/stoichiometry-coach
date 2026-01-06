@@ -53,7 +53,7 @@ function pickProblem() {
   const rxn = DATA.reactions[rnd(0, DATA.reactions.length - 1)];
   const parsed = parseEquation(rxn.equation);
 
-  // Choose type: grams->grams OR grams->moles OR moles->grams (simple, high impact)
+  // Choose type: grams->grams OR grams->moles OR moles->grams
   const types = ["g_to_g", "g_to_mol", "mol_to_g"];
   const type = types[rnd(0, types.length - 1)];
 
@@ -103,23 +103,30 @@ function pickProblem() {
   }
 
   // store full steps for explanations
-  const steps = buildSteps(type, { rxn, react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio, answer });
+  const steps = buildSteps(type, { rxn, react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio });
 
+  // IMPORTANT FIX: include steps on the problem object so Show steps works
   return {
-    type, rxn, react, prod,
-    givenGrams, givenMoles,
-    mmReact, mmProd, ratio,
+    type,
+    rxn,
+    react,
+    prod,
+    givenGrams,
+    givenMoles,
+    mmReact,
+    mmProd,
+    ratio,
     askedUnit,
     prompt,
-    answer: answer
+    answer: answer,
+    steps: steps
   };
 }
 
 function buildSteps(type, ctx){
   const { rxn, react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio } = ctx;
-  const avog = 6.022e23;
 
-  // Always show the three-move idea: convert → ratio → convert
+  // Always show convert → ratio → convert
   if (type === "g_to_g") {
     const molReact = givenGrams / mmReact;
     const molProd = molReact * ratio;
@@ -268,7 +275,7 @@ function showHint(){
 function showSteps(){
   const p = state.current;
   document.getElementById("stepsBox").open = true;
-  setSteps(p.steps);
+  setSteps(p.steps || "<div class='stepBox'>No steps available for this problem yet.</div>");
 }
 
 function newProblem(){
@@ -279,6 +286,8 @@ function newProblem(){
   document.getElementById("answer").value = "";
   document.getElementById("unit").value = state.current.askedUnit;
   setFeedback("Enter your answer and press <strong>Check</strong>.", null);
+
+  // Clear steps each time
   setSteps("");
   document.getElementById("stepsBox").open = false;
 }
