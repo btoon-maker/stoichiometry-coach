@@ -64,7 +64,19 @@ h1{ margin:0; font-size:22px; letter-spacing:.2px; }
   padding:16px;
 }
 h2{ margin:0 0 10px; font-size:18px; }
+
+/* Default labels */
 label{ display:block; font-size:13px; color:var(--gray-2); margin:8px 0 6px; }
+
+/* Strong labels for "I have..." / "I need..." */
+.labelStrong{
+  font-weight: 900;
+  color: var(--gray-1);
+  font-size: 15px;
+  letter-spacing: .2px;
+  margin-top: 10px;
+}
+
 select, .input{
   width:100%;
   padding:10px 12px;
