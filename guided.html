@@ -51,12 +51,12 @@
           <p class="muted">
             Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
             Use the <strong>×</strong> signs as a reminder to multiply across.
-            <strong>We’re not showing the final unit/answer here</strong> — just check your setup.
+            We show the <strong>target unit</strong> only (not the final number).
           </p>
 
           <div class="equationBox">
-            <!-- ✅ NO SCROLL: this line wraps instead of scrolling -->
-            <div class="daLine" aria-label="Dimensional analysis setup line">
+            <!-- Keep everything on one line; scroll only if needed -->
+            <div class="daLine noWrapLine" aria-label="Dimensional analysis setup line">
 
               <div class="givenBox">
                 <div class="frac">
@@ -71,12 +71,13 @@
 
               <span class="times" aria-hidden="true">×</span>
 
-              <div id="slots" class="slotsHoriz"></div>
+              <div id="slots" class="slotsHoriz noWrapSlots"></div>
 
               <span class="times" aria-hidden="true">=</span>
 
               <div class="equalsBox">
-                <span class="unitTag unitTagNeutral" id="targetUnitTag">final</span>
+                <!-- target unit goes here -->
+                <span class="unitTag unitTagNeutral" id="targetUnitTag">g ?</span>
               </div>
             </div>
 
