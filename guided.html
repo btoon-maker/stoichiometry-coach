@@ -31,19 +31,22 @@
 
       <div id="guidedProblemText" class="problemText"></div>
 
-      <div class="guidedGrid">
-        <div class="guidedCol">
+      <!-- NEW: stacked layout -->
+      <div class="guidedStack">
+        <!-- STEP 1 -->
+        <div class="guidedRow">
           <h3 class="h3">Step 1: Choose the path</h3>
           <p class="muted">Pick which moves you need from the Mole Map.</p>
 
-          <div class="pathChecks" id="pathChecks"></div>
+          <div class="pathChecks horiz" id="pathChecks"></div>
 
           <div class="miniNote">
             <strong>Goal:</strong> Your path should be convert → ratio → convert.
           </div>
         </div>
 
-        <div class="guidedCol">
+        <!-- STEP 2 -->
+        <div class="guidedRow">
           <h3 class="h3">Step 2: Build the setup</h3>
           <p class="muted">
             Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
@@ -63,12 +66,11 @@
 
               <span class="times" aria-hidden="true">×</span>
 
-              <!-- SLOTS (rendered by JS, includes × between slots) -->
+              <!-- SLOTS (rendered by JS; includes × between slot boxes) -->
               <div id="slots" class="slotsHoriz"></div>
 
               <span class="times" aria-hidden="true">=</span>
 
-              <!-- TARGET UNIT TAG -->
               <div class="equalsBox">
                 <span class="unitTag" id="targetUnitTag">? ?</span>
               </div>
@@ -83,10 +85,12 @@
           </div>
         </div>
 
-        <div class="guidedCol">
+        <!-- FACTOR BANK -->
+        <div class="guidedRow">
           <h3 class="h3">Factor bank</h3>
           <p class="muted">Drag these into the slots.</p>
-          <div id="bank" class="bank"></div>
+
+          <div id="bank" class="bank bankRow"></div>
 
           <details class="note">
             <summary>How the tool checks you</summary>
