@@ -32,6 +32,7 @@
       <div id="guidedProblemText" class="problemText"></div>
 
       <div class="guidedStack">
+
         <!-- STEP 1 -->
         <div class="guidedRow">
           <h3 class="h3">Step 1: Choose the path</h3>
@@ -54,14 +55,13 @@
 
           <div class="equationBox">
             <div class="daLine" aria-label="Dimensional analysis setup line">
-              <!-- GIVEN (unit tag moved to numerator) -->
+
+              <!-- GIVEN (number + unit side-by-side in numerator) -->
               <div class="givenBox">
                 <div class="frac">
-                  <div class="num">
+                  <div class="num inlineNum">
                     <input id="givenValue" class="input small" />
-                    <div style="margin-top:8px;">
-                      <span id="givenUnit" class="unitTag">g A</span>
-                    </div>
+                    <span id="givenUnit" class="unitTag">g A</span>
                   </div>
                   <div class="bar"></div>
                   <div class="den">
@@ -72,11 +72,12 @@
 
               <span class="times" aria-hidden="true">×</span>
 
-              <!-- SLOTS -->
+              <!-- FACTOR SLOTS -->
               <div id="slots" class="slotsHoriz"></div>
 
               <span class="times" aria-hidden="true">=</span>
 
+              <!-- TARGET -->
               <div class="equalsBox">
                 <span class="unitTag" id="targetUnitTag">? ?</span>
               </div>
@@ -107,6 +108,7 @@
             </ul>
           </details>
         </div>
+
       </div>
     </section>
   </main>
