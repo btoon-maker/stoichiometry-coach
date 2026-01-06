@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stoichiometry Practice Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Stoichiometry Practice</h1>
+        <p class="subtitle">Instant feedback, hints, and step-by-step support.</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="navlink" href="index.html">Mole Map Coach</a>
+      <a class="navlink active" href="practice.html">Practice Generator</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="row-between">
+        <h2>New problem</h2>
+        <div class="pillWrap">
+          <span class="pill">Streak: <strong id="streak">0</strong></span>
+          <span class="pill">Mastery: <strong id="mastery">0%</strong></span>
+        </div>
+      </div>
+
+      <div id="problemText" class="problemText"></div>
+
+      <div class="grid3">
+        <div>
+          <label for="answer">Your answer</label>
+          <input id="answer" class="input" type="text" inputmode="decimal" placeholder="e.g., 12.5" />
+        </div>
+        <div>
+          <label for="unit">Unit</label>
+          <select id="unit">
+            <option value="g">grams (g)</option>
+            <option value="mol">moles (mol)</option>
+            <option value="particles">particles</option>
+            <option value="L">liters (L, STP)</option>
+          </select>
+        </div>
+        <div class="btnCol">
+          <button id="check" class="btn primary">Check</button>
+          <button id="hint" class="btn">Hint</button>
+          <button id="showSteps" class="btn">Show steps</button>
+          <button id="newProblem" class="btn">New problem</button>
+        </div>
+      </div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+
+      <details class="note" id="stepsBox">
+        <summary>Steps</summary>
+        <div id="steps" class="steps"></div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Common mistake checks (built in)</h2>
+      <ul class="bullets">
+        <li>If your unit doesn’t match what the question asked, you’ll get a targeted nudge.</li>
+        <li>If your answer is close but off, you’ll get a clue about which step likely went wrong.</li>
+        <li>If you’re stuck, hit <strong>Hint</strong> to reveal the next correct move.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="muted">Numbers are randomly generated from a safe bank of reactions.</span>
+  </footer>
+
+  <script src="practice.js"></script>
+</body>
+</html>
