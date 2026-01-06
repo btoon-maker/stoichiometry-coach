@@ -1,6 +1,6 @@
 :root{
-  --asu-maroon:#8C1D40; /* ASU Maroon */
-  --asu-gold:#FFC627;   /* ASU Gold */
+  --asu-maroon:#8C1D40;
+  --asu-gold:#FFC627;
   --asu-black:#000000;
   --asu-white:#FFFFFF;
 
@@ -64,11 +64,10 @@ h1{ margin:0; font-size:22px; letter-spacing:.2px; }
   padding:16px;
 }
 h2{ margin:0 0 10px; font-size:18px; }
+.h3{ margin:0 0 8px; font-size:15px; }
 
-/* Default labels */
 label{ display:block; font-size:13px; color:var(--gray-2); margin:8px 0 6px; }
 
-/* Strong labels for "I have..." / "I need..." */
 .labelStrong{
   font-weight: 900;
   color: var(--gray-1);
@@ -86,6 +85,8 @@ select, .input{
   outline:none;
 }
 select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3px rgba(140,29,64,.15); }
+
+.input.small{ padding:8px 10px; font-size:14px; max-width:110px; }
 
 .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
 .grid3{ display:grid; grid-template-columns: 1.2fr .8fr 1fr; gap:12px; align-items:end; }
@@ -113,6 +114,7 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
 .btn.primary:hover{ filter:brightness(1.05); }
 
 .btnCol{ display:grid; gap:10px; }
+.btn.tiny{ padding:8px 10px; border-radius:12px; font-size:12px; }
 
 .muted{ color:var(--asu-gray); font-size:13px; }
 .bullets{ margin:8px 0 0; padding-left:18px; }
@@ -209,4 +211,131 @@ select:focus, .input:focus{ border-color: var(--asu-maroon); box-shadow: 0 0 0 3
   max-width:1100px;
   margin: 0 auto 18px;
   padding: 0 16px;
+}
+
+/* ---------- Guided Practice styles ---------- */
+
+.guidedGrid{
+  display:grid;
+  grid-template-columns: 1.05fr 1.5fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+@media (max-width: 980px){
+  .guidedGrid{ grid-template-columns:1fr; }
+}
+
+.guidedCol{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  background:#fff;
+}
+
+.pathChecks{ display:grid; gap:10px; margin-top:10px; }
+.checkRow{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background: var(--gray-7);
+}
+.checkRow input{ margin-top:2px; }
+
+.miniNote{
+  margin-top:10px;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(255,198,39,.45);
+  background: rgba(255,198,39,.16);
+}
+
+.equationBox{
+  margin-top:10px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  background: var(--gray-7);
+}
+
+.daRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.givenBox{ background:#fff; border:1px solid var(--border); border-radius:16px; padding:10px; }
+
+.slots{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.slot{
+  width:190px;
+  min-height:120px;
+  border:2px dashed rgba(140,29,64,.35);
+  border-radius:16px;
+  padding:10px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.slotHint{ color:var(--asu-gray); font-weight:700; font-size:13px; text-align:center; }
+
+.bank{
+  display:grid;
+  gap:10px;
+}
+
+.factor{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:10px;
+  background:#fff;
+  cursor:grab;
+}
+.factor:active{ cursor:grabbing; }
+.factorTitle{ font-weight:900; margin-bottom:8px; color:var(--asu-maroon); font-size:13px; }
+
+.placed{ width:100%; }
+.placedInner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.placedBtns{ display:grid; gap:8px; }
+
+.frac{
+  min-width:120px;
+  text-align:center;
+  font-weight:800;
+}
+.frac.mini{ min-width:110px; }
+.num, .den{ padding:4px 6px; }
+.bar{ height:1px; background: var(--gray-2); opacity:.35; margin:2px 0; }
+
+.equals{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  min-width:150px;
+  text-align:center;
+}
+
+.unitTag{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(140,29,64,.25);
+  background: rgba(140,29,64,.08);
+  font-weight:900;
+  color:var(--asu-maroon);
 }
