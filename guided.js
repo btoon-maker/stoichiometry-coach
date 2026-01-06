@@ -6,7 +6,7 @@ let DATA = null;
 
 const state = {
   problem: null,
-  slots: [null, null, null] // each slot holds { id, type, top, bottom, flipped }
+  slots: [null, null, null] // each slot holds { id, type, label, top, bottom, flipped }
 };
 
 function rnd(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
@@ -20,12 +20,6 @@ function parseEquation(eq) {
     return { coef: 1, sp: p };
   });
   return { reactants: parseSide(lhs), products: parseSide(rhs) };
-}
-
-function roundSig(x, sig=4){
-  if (x === 0) return 0;
-  const p = Math.pow(10, sig - Math.floor(Math.log10(Math.abs(x))) - 1);
-  return Math.round(x * p) / p;
 }
 
 function makeFactorCard(factor){
@@ -69,15 +63,14 @@ function makePlacedFactor(slotIndex, factor){
         <button class="btn tiny" data-action="clear" data-slot="${slotIndex}">Clear</button>
       </div>
     </div>
-    <div class="placedLabel muted">${factor.label}</div>
   `;
 
   return wrap;
 }
 
 function renderSlots(){
-  const slots = document.getElementById("slots");
-  slots.innerHTML = "";
+  const slotsWrap = document.getElementById("slots");
+  slotsWrap.innerHTML = "";
 
   for (let i=0; i<3; i++){
     const slot = document.createElement("div");
@@ -98,20 +91,32 @@ function renderSlots(){
       slot.appendChild(makePlacedFactor(i, current));
     }
 
-    slots.appendChild(slot);
+    slotsWrap.appendChild(slot);
+
+    // Add × between boxes (but not after the last slot)
+    if (i < 2){
+      const times = document.createElement("span");
+      times.className = "times";
+      times.textContent = "×";
+      times.setAttribute("aria-hidden", "true");
+      slotsWrap.appendChild(times);
+    }
   }
 
-  // Wire flip/clear buttons
-  slots.querySelectorAll("button").forEach(btn => {
+  // Wire flip/clear buttons (inside rendered slots)
+  slotsWrap.querySelectorAll("button").forEach(btn => {
     btn.addEventListener("click", () => {
       const action = btn.dataset.action;
-      const slot = Number(btn.dataset.slot);
-      if (action === "flip") {
-        state.slots[slot].flipped = !state.slots[slot].flipped;
+      const slotIndex = Number(btn.dataset.slot);
+
+      if (!Number.isFinite(slotIndex)) return;
+
+      if (action === "flip" && state.slots[slotIndex]){
+        state.slots[slotIndex].flipped = !state.slots[slotIndex].flipped;
         renderSlots();
       }
-      if (action === "clear") {
-        state.slots[slot] = null;
+      if (action === "clear"){
+        state.slots[slotIndex] = null;
         renderSlots();
       }
     });
@@ -122,7 +127,6 @@ function placeFactor(slotIndex, factorId){
   const factor = state.problem.factorBank.find(f => f.id === factorId);
   if (!factor) return;
 
-  // Place a copy into slot
   state.slots[slotIndex] = { ...factor };
   renderSlots();
 }
@@ -130,7 +134,6 @@ function placeFactor(slotIndex, factorId){
 function renderBank(){
   const bank = document.getElementById("bank");
   bank.innerHTML = "";
-
   state.problem.factorBank.forEach(f => bank.appendChild(makeFactorCard(f)));
 }
 
@@ -219,23 +222,13 @@ function buildGuidedProblem(){
     If you start with <strong>${givenGrams} g</strong> of <strong>${react.sp}</strong>,
     build the setup to find <strong>grams</strong> of <strong>${prod.sp}</strong> produced (assume excess).`;
 
-  // correct factor requirements by slot:
-  // slot 0: mm_in unflipped (1 mol / g)
-  // slot 1: ratio unflipped (mol prod / mol react)
-  // slot 2: mm_out unflipped (g / mol)
   const correct = [
     { id: "mm_in", flipped: false },
     { id: "ratio", flipped: false },
     { id: "mm_out", flipped: false }
   ];
 
-  return {
-    rxn, react, prod,
-    givenGrams, mmReact, mmProd,
-    prompt,
-    factorBank,
-    correct
-  };
+  return { rxn, react, prod, givenGrams, mmReact, mmProd, prompt, factorBank, correct };
 }
 
 function setSetupFeedback(msg, ok=null){
@@ -259,7 +252,7 @@ function checkSetup(){
 
   for (let i=0; i<3; i++){
     if (!state.slots[i]){
-      setSetupFeedback("You still have an empty slot. Drag a factor into <strong>each</strong> slot.", false);
+      setSetupFeedback("You still have an empty box. Drag a factor into <strong>each</strong> box.", false);
       return;
     }
   }
@@ -272,11 +265,11 @@ function checkSetup(){
     const need = expected[i];
 
     if (placed.id !== need.id){
-      errors.push(`Slot ${i+1}: wrong factor type.`);
+      errors.push(`Box ${i+1}: wrong factor type.`);
       continue;
     }
     if (placed.flipped !== need.flipped){
-      errors.push(`Slot ${i+1}: correct factor, but it needs to be <strong>${need.flipped ? "flipped" : "not flipped"}</strong> so units cancel.`);
+      errors.push(`Box ${i+1}: correct factor, but it needs to be <strong>${need.flipped ? "flipped" : "not flipped"}</strong> so units cancel.`);
     }
   }
 
@@ -285,11 +278,10 @@ function checkSetup(){
     return;
   }
 
-  setSetupFeedback("✅ Setup correct! Your units cancel properly. Now you can multiply across the top and divide by the bottom.", true);
+  setSetupFeedback("✅ Setup correct! Your units cancel properly. Now multiply across the top and divide by the bottom.", true);
 }
 
 function showCorrectSetup(){
-  // Place correct factors into slots automatically
   const need = state.problem.correct;
   state.slots = need.map(req => {
     const f = state.problem.factorBank.find(x => x.id === req.id);
@@ -312,7 +304,7 @@ function renderProblem(){
   state.slots = [null, null, null];
   renderSlots();
 
-  setSetupFeedback("Drag factors into each slot, then click <strong>Check my setup</strong>.", null);
+  setSetupFeedback("Drag factors into each box, then click <strong>Check my setup</strong>.", null);
 }
 
 async function init(){
