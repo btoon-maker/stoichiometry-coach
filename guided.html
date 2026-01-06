@@ -51,13 +51,13 @@
           <p class="muted">
             Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
             Use the <strong>×</strong> signs as a reminder to multiply across.
-            <strong>We’re not showing the final unit/answer here</strong> — just build a clean setup.
+            <strong>We’re not showing the final unit/answer here</strong> — just check your setup.
           </p>
 
           <div class="equationBox">
+            <!-- ✅ NO SCROLL: this line wraps instead of scrolling -->
             <div class="daLine" aria-label="Dimensional analysis setup line">
 
-              <!-- GIVEN (number + unit side-by-side in numerator) -->
               <div class="givenBox">
                 <div class="frac">
                   <div class="num inlineNum">
@@ -65,20 +65,16 @@
                     <span id="givenUnit" class="unitTag">g A</span>
                   </div>
                   <div class="bar"></div>
-                  <div class="den">
-                    <span class="muted" style="font-weight:800;">1</span>
-                  </div>
+                  <div class="den"><span class="muted" style="font-weight:800;">1</span></div>
                 </div>
               </div>
 
               <span class="times" aria-hidden="true">×</span>
 
-              <!-- FACTOR SLOTS -->
               <div id="slots" class="slotsHoriz"></div>
 
               <span class="times" aria-hidden="true">=</span>
 
-              <!-- HIDDEN ANSWER: show a neutral placeholder instead -->
               <div class="equalsBox">
                 <span class="unitTag unitTagNeutral" id="targetUnitTag">final</span>
               </div>
@@ -111,17 +107,16 @@
         </div>
 
         <!-- STEP 3 -->
-        <div class="guidedRow">
+        <div class="guidedRow lastStep">
           <h3 class="h3">Step 3: Multiply the numbers (then divide)</h3>
           <p class="muted">
-            Once your setup is correct, you can calculate faster by grouping numbers:
-            put all <strong>numerator values</strong> in parentheses, multiply them,
-            then divide by the product of all <strong>denominator values</strong>.
+            Once your setup is correct, calculate like this:
+            multiply all <strong>numerator</strong> numbers together, multiply all <strong>denominator</strong> numbers together, then divide.
           </p>
 
           <div class="calcCard">
             <div class="calcExample">
-              <div class="calcLabel">Example (how to calculate):</div>
+              <div class="calcLabel">Example method:</div>
               <div class="calcLine">
                 (<span class="calcGroup">numerators</span>) ÷ (<span class="calcGroup">denominators</span>)
               </div>
@@ -130,25 +125,10 @@
               </div>
             </div>
 
-            <div class="calcExample" style="margin-top:12px;">
-              <div class="calcLabel">For <em>this</em> problem, your numbers will be:</div>
-
-              <div class="calcLineWrap">
-                <div class="calcLine">
-                  (<span id="numVals" class="calcVals">…</span>)
-                  <span class="calcOp">÷</span>
-                  (<span id="denVals" class="calcVals">…</span>)
-                </div>
-                <div class="muted" style="margin-top:6px;">
-                  Tip: any “1” values don’t change the product — you can ignore them.
-                </div>
-              </div>
-            </div>
-
             <div class="finalAnswerArea">
               <div class="finalInputs">
                 <div>
-                  <label for="finalAnswer">Your final answer (number only)</label>
+                  <label for="finalAnswer" class="labelStrong">Your final answer (number only)</label>
                   <input id="finalAnswer" class="input" type="text" inputmode="decimal" placeholder="e.g., 31.5" />
                 </div>
                 <div class="finalBtnCol">
