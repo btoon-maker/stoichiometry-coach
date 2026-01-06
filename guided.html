@@ -51,6 +51,7 @@
           <p class="muted">
             Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
             Use the <strong>×</strong> signs as a reminder to multiply across.
+            <strong>We’re not showing the final unit/answer here</strong> — just build a clean setup.
           </p>
 
           <div class="equationBox">
@@ -77,9 +78,9 @@
 
               <span class="times" aria-hidden="true">=</span>
 
-              <!-- TARGET -->
+              <!-- HIDDEN ANSWER: show a neutral placeholder instead -->
               <div class="equalsBox">
-                <span class="unitTag" id="targetUnitTag">? ?</span>
+                <span class="unitTag unitTagNeutral" id="targetUnitTag">final</span>
               </div>
             </div>
 
@@ -109,12 +110,64 @@
           </details>
         </div>
 
+        <!-- STEP 3 -->
+        <div class="guidedRow">
+          <h3 class="h3">Step 3: Multiply the numbers (then divide)</h3>
+          <p class="muted">
+            Once your setup is correct, you can calculate faster by grouping numbers:
+            put all <strong>numerator values</strong> in parentheses, multiply them,
+            then divide by the product of all <strong>denominator values</strong>.
+          </p>
+
+          <div class="calcCard">
+            <div class="calcExample">
+              <div class="calcLabel">Example (how to calculate):</div>
+              <div class="calcLine">
+                (<span class="calcGroup">numerators</span>) ÷ (<span class="calcGroup">denominators</span>)
+              </div>
+              <div class="muted" style="margin-top:6px;">
+                Multiply everything on top, multiply everything on bottom, then divide.
+              </div>
+            </div>
+
+            <div class="calcExample" style="margin-top:12px;">
+              <div class="calcLabel">For <em>this</em> problem, your numbers will be:</div>
+
+              <div class="calcLineWrap">
+                <div class="calcLine">
+                  (<span id="numVals" class="calcVals">…</span>)
+                  <span class="calcOp">÷</span>
+                  (<span id="denVals" class="calcVals">…</span>)
+                </div>
+                <div class="muted" style="margin-top:6px;">
+                  Tip: any “1” values don’t change the product — you can ignore them.
+                </div>
+              </div>
+            </div>
+
+            <div class="finalAnswerArea">
+              <div class="finalInputs">
+                <div>
+                  <label for="finalAnswer">Your final answer (number only)</label>
+                  <input id="finalAnswer" class="input" type="text" inputmode="decimal" placeholder="e.g., 31.5" />
+                </div>
+                <div class="finalBtnCol">
+                  <button id="checkFinal" class="btn primary">Check my final answer</button>
+                  <button id="revealFinal" class="btn">Show expected answer</button>
+                </div>
+              </div>
+
+              <div id="finalFeedback" class="feedback" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <span class="muted">Guided Practice focuses on setup + unit cancellation (not just the final answer).</span>
+    <span class="muted">Guided Practice focuses on setup + unit cancellation, then calculation confidence.</span>
   </footer>
 
   <script src="guided.js"></script>
