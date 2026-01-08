@@ -8,10 +8,10 @@ const state = {
   hintLevel: 0
 };
 
-// Turn formula digits into subscripts using HTML
+// Convert only formula digits to subscripts (NOT coefficients).
 function chemHTML(text) {
   const s = String(text ?? "");
-  return s.replace(/(\d+)/g, "<sub>$1</sub>");
+  return s.replace(/([A-Za-z\)])(\d+)/g, "$1<sub>$2</sub>");
 }
 
 function parseEquation(eq) {
@@ -64,7 +64,7 @@ function pickProblem() {
   const prod = parsed.products[rnd(0, parsed.products.length - 1)];
 
   const givenGrams = rnd(5, 45);
-  const givenMoles = rnd(1, 6) / 2; // 0.5 to 3.0
+  const givenMoles = rnd(1, 6) / 2; // 0.5 to 3.0 mol
 
   const mmReact = rxn.species[react.sp].molarMass;
   const mmProd = rxn.species[prod.sp].molarMass;
@@ -124,7 +124,7 @@ function pickProblem() {
 }
 
 function buildSteps(type, ctx) {
-  const { rxn, react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio } = ctx;
+  const { react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio } = ctx;
 
   if (type === "g_to_g") {
     const molReact = givenGrams / mmReact;
@@ -252,7 +252,10 @@ function showHint() {
     return;
   }
   if (state.hintLevel === 2) {
-    setFeedback(`Hint 2: Your mole ratio comes from the balanced equation coefficients for <strong>${chemHTML(p.react.sp)}</strong> and <strong>${chemHTML(p.prod.sp)}</strong>.`, null);
+    setFeedback(
+      `Hint 2: Your mole ratio comes from the balanced equation coefficients for <strong>${chemHTML(p.react.sp)}</strong> and <strong>${chemHTML(p.prod.sp)}</strong>.`,
+      null
+    );
     return;
   }
   setFeedback(`Hint 3: Use <strong>Show steps</strong> and copy the structure, then try a new problem.`, null);
