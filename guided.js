@@ -28,6 +28,17 @@ function parseEquation(eq) {
   return { reactants: parseSide(lhs), products: parseSide(rhs) };
 }
 
+/**
+ * Turn chemical formula digits into HTML subscripts.
+ * Examples: H2 -> H<sub>2</sub>, NH3 -> NH<sub>3</sub>, C6H12O6 -> C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>
+ * Safe for things like: "g H2O", "2 H2 + O2 -> 2 H2O"
+ */
+function chemHTML(text) {
+  const s = String(text ?? "");
+  // Replace any sequence of digits with subscript digits
+  return s.replace(/(\d+)/g, "<sub>$1</sub>");
+}
+
 function setSetupFeedback(msg, ok = null) {
   const box = document.getElementById("setupFeedback");
   box.className = "feedback" + (ok === true ? " good" : ok === false ? " bad" : "");
@@ -53,7 +64,6 @@ function renderPathChecks() {
   items.forEach(item => {
     const row = document.createElement("label");
     row.className = "checkRow";
-    // ✅ unchecked by default
     row.innerHTML = `
       <input type="checkbox" id="${item.id}" />
       <span><strong>${item.label}</strong></span>
@@ -76,12 +86,12 @@ function makeFactorCard(factor) {
   div.draggable = true;
   div.dataset.factorId = factor.id;
 
-  // No titles
+  // IMPORTANT: use chemHTML so species show subscripts
   div.innerHTML = `
     <div class="frac mini">
-      <div class="num">${factor.top}</div>
+      <div class="num">${chemHTML(factor.top)}</div>
       <div class="bar"></div>
-      <div class="den">${factor.bottom}</div>
+      <div class="den">${chemHTML(factor.bottom)}</div>
     </div>
   `;
 
@@ -108,9 +118,9 @@ function makePlacedFactor(slotIndex, factor) {
   wrap.innerHTML = `
     <div class="placedInner">
       <div class="frac mini">
-        <div class="num">${top}</div>
+        <div class="num">${chemHTML(top)}</div>
         <div class="bar"></div>
-        <div class="den">${bottom}</div>
+        <div class="den">${chemHTML(bottom)}</div>
       </div>
       <div class="placedBtns">
         <button class="btn tiny" data-action="flip" data-slot="${slotIndex}">Flip</button>
@@ -272,9 +282,10 @@ function buildGuidedProblem() {
     { id: "ratio_flipped", top: ratioBottom, bottom: ratioTop, flipped: false }
   ];
 
-  const prompt = `A reaction occurs: <strong>${rxn.equation}</strong><br>
-    If you start with <strong>${givenGrams} g</strong> of <strong>${react.sp}</strong>,
-    build the setup to find <strong>grams</strong> of <strong>${prod.sp}</strong> produced (assume excess).`;
+  // IMPORTANT: Use chemHTML when displaying equation/species
+  const prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br>
+    If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(react.sp)}</strong>,
+    build the setup to find <strong>grams</strong> of <strong>${chemHTML(prod.sp)}</strong> produced (assume excess).`;
 
   const correct = [
     { id: "mm_in", flipped: false },
@@ -289,10 +300,10 @@ function renderProblem() {
   document.getElementById("guidedProblemText").innerHTML = state.problem.prompt;
 
   document.getElementById("givenValue").value = String(state.problem.givenGrams);
-  document.getElementById("givenUnit").textContent = `g ${state.problem.react.sp}`;
+  document.getElementById("givenUnit").innerHTML = chemHTML(`g ${state.problem.react.sp}`);
 
-  // ✅ show target unit (not answer)
-  document.getElementById("targetUnitTag").textContent = `g ${state.problem.prod.sp}`;
+  // show target unit (not answer)
+  document.getElementById("targetUnitTag").innerHTML = chemHTML(`g ${state.problem.prod.sp}`);
 
   renderPathChecks();
   renderBank();
