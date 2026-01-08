@@ -29,14 +29,16 @@ function parseEquation(eq) {
 }
 
 /**
- * Turn chemical formula digits into HTML subscripts.
- * Examples: H2 -> H<sub>2</sub>, NH3 -> NH<sub>3</sub>, C6H12O6 -> C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>
- * Safe for things like: "g H2O", "2 H2 + O2 -> 2 H2O"
+ * Convert only formula digits to subscripts (NOT coefficients).
+ * Examples:
+ *   "2 H2 + O2 -> 2 H2O"  => "2 H<sub>2</sub> + O<sub>2</sub> -> 2 H<sub>2</sub>O"
+ *   "NH3" => "NH<sub>3</sub>"
+ *   "(OH)2" => "(OH)<sub>2</sub>"
  */
 function chemHTML(text) {
   const s = String(text ?? "");
-  // Replace any sequence of digits with subscript digits
-  return s.replace(/(\d+)/g, "<sub>$1</sub>");
+  // Only subscript digits that follow a letter or ')'
+  return s.replace(/([A-Za-z\)])(\d+)/g, "$1<sub>$2</sub>");
 }
 
 function setSetupFeedback(msg, ok = null) {
@@ -86,7 +88,6 @@ function makeFactorCard(factor) {
   div.draggable = true;
   div.dataset.factorId = factor.id;
 
-  // IMPORTANT: use chemHTML so species show subscripts
   div.innerHTML = `
     <div class="frac mini">
       <div class="num">${chemHTML(factor.top)}</div>
@@ -230,7 +231,9 @@ function checkSetup() {
       continue;
     }
     if (placed.flipped !== need.flipped) {
-      errors.push(`Box ${i + 1}: correct factor, but it needs to be <strong>${need.flipped ? "flipped" : "not flipped"}</strong> so units cancel.`);
+      errors.push(
+        `Box ${i + 1}: correct factor, but it needs to be <strong>${need.flipped ? "flipped" : "not flipped"}</strong> so units cancel.`
+      );
     }
   }
 
@@ -282,7 +285,6 @@ function buildGuidedProblem() {
     { id: "ratio_flipped", top: ratioBottom, bottom: ratioTop, flipped: false }
   ];
 
-  // IMPORTANT: Use chemHTML when displaying equation/species
   const prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br>
     If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(react.sp)}</strong>,
     build the setup to find <strong>grams</strong> of <strong>${chemHTML(prod.sp)}</strong> produced (assume excess).`;
@@ -302,7 +304,6 @@ function renderProblem() {
   document.getElementById("givenValue").value = String(state.problem.givenGrams);
   document.getElementById("givenUnit").innerHTML = chemHTML(`g ${state.problem.react.sp}`);
 
-  // show target unit (not answer)
   document.getElementById("targetUnitTag").innerHTML = chemHTML(`g ${state.problem.prod.sp}`);
 
   renderPathChecks();
