@@ -56,14 +56,42 @@ const STEPS = {
   }
 };
 
-// Route builder: always do convert → ratio → convert
-function buildPath(start, target) {
-  const startUnit = start.replace(/A$/,"").replace(/B$/,""); // grams/moles/particles/liters
-  const targetUnit = target.replace(/A$/,"").replace(/B$/,"");
+// ------------------------------
+// Helpers: parse start/target value
+// ------------------------------
+function parseChoice(value) {
+  // value examples: gramsA, molesB, particlesA, litersB
+  const unit = value.replace(/A$/, "").replace(/B$/, "");
+  const substance = value.endsWith("A") ? "A" : "B";
+  return { unit, substance };
+}
 
-  const startSubstance = start.endsWith("A") ? "A" : "B";
-  const targetSubstance = target.endsWith("A") ? "A" : "B";
+// ------------------------------
+// Path builders
+// ------------------------------
 
+// Same-substance conversion path (no mole ratio)
+function buildSameSubstancePath(startUnit, targetUnit) {
+  const path = [];
+
+  // If already same unit, no steps.
+  if (startUnit === targetUnit) return path;
+
+  // Convert start to moles if needed
+  if (startUnit !== "moles") {
+    path.push(unitToMolesStep(startUnit));
+  }
+
+  // Convert moles to target if needed
+  if (targetUnit !== "moles") {
+    path.push(molesToUnitStep(targetUnit));
+  }
+
+  return path;
+}
+
+// Stoichiometry path: convert → ratio → convert
+function buildStoichiometryPath(startUnit, targetUnit) {
   const path = [];
 
   // Step 1: ensure moles of start substance
@@ -71,10 +99,8 @@ function buildPath(start, target) {
     path.push(unitToMolesStep(startUnit));
   }
 
-  // Step 2: if substance changes, do mole ratio
-  if (startSubstance !== targetSubstance) {
-    path.push("mole_ratio");
-  }
+  // Step 2: mole ratio (always needed if substance changes)
+  path.push("mole_ratio");
 
   // Step 3: convert from moles to target unit (if needed)
   if (targetUnit !== "moles") {
@@ -84,6 +110,23 @@ function buildPath(start, target) {
   return path;
 }
 
+// Main router: choose same-substance vs cross-substance logic
+function buildPath(startValue, targetValue) {
+  const start = parseChoice(startValue);
+  const target = parseChoice(targetValue);
+
+  const sameSubstance = start.substance === target.substance;
+
+  if (sameSubstance) {
+    return buildSameSubstancePath(start.unit, target.unit);
+  }
+
+  return buildStoichiometryPath(start.unit, target.unit);
+}
+
+// ------------------------------
+// Step key mappers
+// ------------------------------
 function unitToMolesStep(unit) {
   if (unit === "grams") return "grams_to_moles";
   if (unit === "particles") return "particles_to_moles";
@@ -98,13 +141,47 @@ function molesToUnitStep(unit) {
   return "moles_to_grams";
 }
 
-function renderPath(pathKeys) {
+// ------------------------------
+// Rendering
+// ------------------------------
+function renderPath(pathKeys, startValue, targetValue) {
   const area = document.getElementById("pathArea");
   area.innerHTML = "";
 
+  const start = parseChoice(startValue);
+  const target = parseChoice(targetValue);
+
+  const isSameSubstance = start.substance === target.substance;
+
+  // A small contextual header so students can "see" what type of path it is.
+  const header = document.createElement("div");
+  header.className = "step";
+  header.innerHTML = `
+    <div class="stepTitle">
+      <div><strong>Your path type:</strong> ${
+        isSameSubstance
+          ? `Within Substance ${start.substance} (unit conversion)`
+          : `Stoichiometry from ${start.substance} → ${target.substance}`
+      }</div>
+      <span class="badge">${isSameSubstance ? "Convert" : "Convert → Ratio → Convert"}</span>
+    </div>
+    <p class="muted" style="margin:0;">
+      ${isSameSubstance
+        ? "No mole ratio needed because you are staying within the same substance."
+        : "You will convert to moles, use the mole ratio from the balanced equation, then convert to the target unit."
+      }
+    </p>
+  `;
+  area.appendChild(header);
+
   if (!pathKeys.length) {
-    area.innerHTML = `<div class="step"><div class="stepTitle"><strong>No steps needed</strong></div>
-      <p>You’re already at the target form.</p></div>`;
+    const div = document.createElement("div");
+    div.className = "step";
+    div.innerHTML = `
+      <div class="stepTitle"><div><strong>No steps needed</strong></div><span class="badge">Done</span></div>
+      <p>You’re already at the target form.</p>
+    `;
+    area.appendChild(div);
     return;
   }
 
@@ -116,7 +193,7 @@ function renderPath(pathKeys) {
     div.className = "step";
     div.innerHTML = `
       <div class="stepTitle">
-        <div><strong>Step ${i+1}:</strong> ${step.title}</div>
+        <div><strong>Step ${i + 1}:</strong> ${step.title}</div>
         <span class="badge">${step.badge}</span>
       </div>
       <p>${step.text}</p>
@@ -126,12 +203,15 @@ function renderPath(pathKeys) {
   });
 }
 
+// ------------------------------
 // Wire up UI
+// ------------------------------
 document.getElementById("buildPath").addEventListener("click", () => {
-  const start = document.getElementById("start").value;
-  const target = document.getElementById("target").value;
-  const path = buildPath(start, target);
-  renderPath(path);
+  const startValue = document.getElementById("start").value;
+  const targetValue = document.getElementById("target").value;
+
+  const path = buildPath(startValue, targetValue);
+  renderPath(path, startValue, targetValue);
 });
 
 document.getElementById("reset").addEventListener("click", () => {
