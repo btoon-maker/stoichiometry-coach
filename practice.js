@@ -1,5 +1,7 @@
 let DATA = null;
 
+const STP = 22.4; // L per mol at STP
+
 const state = {
   current: null,
   streak: 0,
@@ -29,6 +31,10 @@ function rnd(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function choice(arr) {
+  return arr[rnd(0, arr.length - 1)];
+}
+
 function roundSig(x, sig = 4) {
   if (x === 0) return 0;
   const p = Math.pow(10, sig - Math.floor(Math.log10(Math.abs(x))) - 1);
@@ -53,29 +59,158 @@ function updateStats() {
   document.getElementById("mastery").textContent = `${pct(mastery)}%`;
 }
 
+function normalizeNumber(s) {
+  const cleaned = String(s).replace(/,/g, "").trim();
+  const v = Number(cleaned);
+  return Number.isFinite(v) ? v : null;
+}
+
+// -------------------------------
+// Problem picking (controlled random)
+// -------------------------------
+function getFocus() {
+  const el = document.getElementById("focus");
+  return el ? el.value : "mixed";
+}
+
+function weightedPickType(focus) {
+  // Conversion-only types (same substance, no mole ratio)
+  const conversionTypes = [
+    "conv_g_to_mol",
+    "conv_mol_to_g",
+    "conv_L_to_mol",
+    "conv_mol_to_L",
+    "conv_L_to_g", // 2-step
+    "conv_g_to_L"  // 2-step
+  ];
+
+  // Stoichiometry types (between substances; no particles)
+  const stoichTypes = [
+    "sto_g_to_g",
+    "sto_g_to_mol",
+    "sto_mol_to_g",
+    "sto_L_to_g",
+    "sto_g_to_L",
+    "sto_L_to_L"
+  ];
+
+  if (focus === "conversion") return choice(conversionTypes);
+  if (focus === "stoich") return choice(stoichTypes);
+
+  // mixed: slight preference toward stoich
+  const r = Math.random();
+  if (r < 0.4) return choice(conversionTypes); // 40%
+  return choice(stoichTypes);                   // 60%
+}
+
 function pickProblem() {
+  const focus = getFocus();
+  const type = weightedPickType(focus);
+
   const rxn = DATA.reactions[rnd(0, DATA.reactions.length - 1)];
   const parsed = parseEquation(rxn.equation);
-
-  const types = ["g_to_g", "g_to_mol", "mol_to_g"];
-  const type = types[rnd(0, types.length - 1)];
 
   const react = parsed.reactants[rnd(0, parsed.reactants.length - 1)];
   const prod = parsed.products[rnd(0, parsed.products.length - 1)];
 
-  const givenGrams = rnd(5, 45);
-  const givenMoles = rnd(1, 6) / 2; // 0.5 to 3.0 mol
-
-  const mmReact = rxn.species[react.sp].molarMass;
-  const mmProd = rxn.species[prod.sp].molarMass;
+  const mmReact = Number(rxn.species[react.sp].molarMass);
+  const mmProd = Number(rxn.species[prod.sp].molarMass);
 
   const ratio = prod.coef / react.coef;
+
+  // For conversion problems, choose ONE species from anywhere
+  const allSpecies = [...parsed.reactants, ...parsed.products];
+  const single = choice(allSpecies);
+  const sp = single.sp;
+  const mmSingle = Number(rxn.species[sp].molarMass);
+
+  // Values
+  const givenGrams = rnd(5, 45);
+  const givenLiters = rnd(5, 60); // STP liters
+  const givenMoles = Number((Math.random() * 1.8 + 0.2).toFixed(2)); // 0.20–2.00 mol
 
   let askedUnit = "g";
   let prompt = "";
   let answer = 0;
 
-  if (type === "g_to_g") {
+  // Also keep a mode so hints make sense
+  const mode = type.startsWith("conv_") ? "conversion" : "stoich";
+
+  // --------------------
+  // Conversion-only (same substance)
+  // --------------------
+  if (type === "conv_g_to_mol") {
+    askedUnit = "mol";
+    answer = givenGrams / mmSingle;
+
+    prompt = `Conversion practice (same substance).<br><br>
+      If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(sp)}</strong>,<br>
+      how many <strong>moles</strong> of <strong>${chemHTML(sp)}</strong> is that?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "conv_mol_to_g") {
+    askedUnit = "g";
+    answer = givenMoles * mmSingle;
+
+    prompt = `Conversion practice (same substance).<br><br>
+      If you start with <strong>${givenMoles} mol</strong> of <strong>${chemHTML(sp)}</strong>,<br>
+      how many <strong>grams</strong> of <strong>${chemHTML(sp)}</strong> is that?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "conv_L_to_mol") {
+    askedUnit = "mol";
+    answer = givenLiters / STP;
+
+    prompt = `Conversion practice (gas at STP).<br><br>
+      If you start with <strong>${givenLiters} L</strong> of <strong>${chemHTML(sp)}</strong> (at STP),<br>
+      how many <strong>moles</strong> of <strong>${chemHTML(sp)}</strong> is that?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "conv_mol_to_L") {
+    askedUnit = "L";
+    answer = givenMoles * STP;
+
+    prompt = `Conversion practice (gas at STP).<br><br>
+      If you start with <strong>${givenMoles} mol</strong> of <strong>${chemHTML(sp)}</strong>,<br>
+      what volume is that in <strong>liters</strong> at STP?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "conv_L_to_g") {
+    askedUnit = "g";
+    const mol = givenLiters / STP;
+    answer = mol * mmSingle;
+
+    prompt = `Conversion practice (gas at STP; two steps).<br><br>
+      If you start with <strong>${givenLiters} L</strong> of <strong>${chemHTML(sp)}</strong> (at STP),<br>
+      how many <strong>grams</strong> of <strong>${chemHTML(sp)}</strong> is that?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "conv_g_to_L") {
+    askedUnit = "L";
+    const mol = givenGrams / mmSingle;
+    answer = mol * STP;
+
+    prompt = `Conversion practice (gas at STP; two steps).<br><br>
+      If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(sp)}</strong>,<br>
+      what volume is that in <strong>liters</strong> at STP?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  // --------------------
+  // Stoichiometry (between substances)
+  // --------------------
+  if (type === "sto_g_to_g") {
     askedUnit = "g";
     const molReact = givenGrams / mmReact;
     const molProd = molReact * ratio;
@@ -84,49 +219,149 @@ function pickProblem() {
     prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
       If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(react.sp)}</strong>,<br>
       how many <strong>grams</strong> of <strong>${chemHTML(prod.sp)}</strong> can be produced (assume excess of the other reactant)?`;
-  } else if (type === "g_to_mol") {
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "sto_g_to_mol") {
     askedUnit = "mol";
     const molReact = givenGrams / mmReact;
-    const molProd = molReact * ratio;
-    answer = molProd;
+    answer = molReact * ratio;
 
     prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
       If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(react.sp)}</strong>,<br>
       how many <strong>moles</strong> of <strong>${chemHTML(prod.sp)}</strong> can be produced (assume excess)?`;
-  } else {
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "sto_mol_to_g") {
     askedUnit = "g";
-    const molReact = givenMoles;
-    const molProd = molReact * ratio;
+    const molProd = givenMoles * ratio;
     answer = molProd * mmProd;
 
     prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
       If you start with <strong>${givenMoles} mol</strong> of <strong>${chemHTML(react.sp)}</strong>,<br>
       how many <strong>grams</strong> of <strong>${chemHTML(prod.sp)}</strong> can be produced (assume excess)?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
   }
 
-  const steps = buildSteps(type, { rxn, react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio });
+  if (type === "sto_L_to_g") {
+    askedUnit = "g";
+    const molReact = givenLiters / STP;
+    const molProd = molReact * ratio;
+    answer = molProd * mmProd;
 
-  return {
-    type,
-    rxn,
-    react,
-    prod,
-    givenGrams,
-    givenMoles,
-    mmReact,
-    mmProd,
-    ratio,
-    askedUnit,
-    prompt,
-    answer,
-    steps
-  };
+    prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
+      If you start with <strong>${givenLiters} L</strong> of <strong>${chemHTML(react.sp)}</strong> (gas at STP),<br>
+      how many <strong>grams</strong> of <strong>${chemHTML(prod.sp)}</strong> can be produced (assume excess)?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  if (type === "sto_g_to_L") {
+    askedUnit = "L";
+    const molReact = givenGrams / mmReact;
+    const molProd = molReact * ratio;
+    answer = molProd * STP;
+
+    prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
+      If you start with <strong>${givenGrams} g</strong> of <strong>${chemHTML(react.sp)}</strong>,<br>
+      what volume of <strong>${chemHTML(prod.sp)}</strong> is produced in <strong>liters</strong> at STP (assume excess)?`;
+
+    return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
+  }
+
+  // sto_L_to_L
+  askedUnit = "L";
+  const molReact = givenLiters / STP;
+  const molProd = molReact * ratio;
+  answer = molProd * STP;
+
+  prompt = `A reaction occurs: <strong>${chemHTML(rxn.equation)}</strong><br><br>
+    If you start with <strong>${givenLiters} L</strong> of <strong>${chemHTML(react.sp)}</strong> (gas at STP),<br>
+    what volume of <strong>${chemHTML(prod.sp)}</strong> is produced in <strong>liters</strong> at STP (assume excess)?`;
+
+  return finalizeProblem({ type, mode, rxn, react, prod, sp, mmSingle, givenGrams, givenMoles, givenLiters, mmReact, mmProd, ratio, askedUnit, prompt, answer });
 }
 
-function buildSteps(type, ctx) {
-  const { react, prod, givenGrams, givenMoles, mmReact, mmProd, ratio } = ctx;
+function finalizeProblem(p) {
+  p.steps = buildSteps(p);
+  return p;
+}
 
-  if (type === "g_to_g") {
+// -------------------------------
+// Steps builder (matches your existing “Show steps” style)
+// -------------------------------
+function buildSteps(p) {
+  const { type, react, prod, sp, givenGrams, givenMoles, givenLiters, mmReact, mmProd, mmSingle, ratio } = p;
+
+  // Conversion steps
+  if (type === "conv_g_to_mol") {
+    const mol = givenGrams / mmSingle;
+    return `
+      <div class="stepBox"><strong>Convert:</strong> grams → moles<br><br>
+        ${givenGrams} g ${chemHTML(sp)} × (1 mol / ${mmSingle} g) = <strong>${roundSig(mol)} mol ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "conv_mol_to_g") {
+    const grams = givenMoles * mmSingle;
+    return `
+      <div class="stepBox"><strong>Convert:</strong> moles → grams<br><br>
+        ${givenMoles} mol ${chemHTML(sp)} × (${mmSingle} g / 1 mol) = <strong>${roundSig(grams)} g ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "conv_L_to_mol") {
+    const mol = givenLiters / STP;
+    return `
+      <div class="stepBox"><strong>Convert (STP):</strong> liters → moles<br><br>
+        ${givenLiters} L ${chemHTML(sp)} × (1 mol / ${STP} L) = <strong>${roundSig(mol)} mol ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "conv_mol_to_L") {
+    const L = givenMoles * STP;
+    return `
+      <div class="stepBox"><strong>Convert (STP):</strong> moles → liters<br><br>
+        ${givenMoles} mol ${chemHTML(sp)} × (${STP} L / 1 mol) = <strong>${roundSig(L)} L ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "conv_L_to_g") {
+    const mol = givenLiters / STP;
+    const grams = mol * mmSingle;
+    return `
+      <div class="stepBox"><strong>Convert (STP):</strong> liters → moles<br><br>
+        ${givenLiters} L ${chemHTML(sp)} × (1 mol / ${STP} L) = <strong>${roundSig(mol)} mol ${chemHTML(sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Convert:</strong> moles → grams<br><br>
+        ${roundSig(mol)} mol ${chemHTML(sp)} × (${mmSingle} g / 1 mol) = <strong>${roundSig(grams)} g ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "conv_g_to_L") {
+    const mol = givenGrams / mmSingle;
+    const L = mol * STP;
+    return `
+      <div class="stepBox"><strong>Convert:</strong> grams → moles<br><br>
+        ${givenGrams} g ${chemHTML(sp)} × (1 mol / ${mmSingle} g) = <strong>${roundSig(mol)} mol ${chemHTML(sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Convert (STP):</strong> moles → liters<br><br>
+        ${roundSig(mol)} mol ${chemHTML(sp)} × (${STP} L / 1 mol) = <strong>${roundSig(L)} L ${chemHTML(sp)}</strong>
+      </div>
+    `;
+  }
+
+  // Stoichiometry steps (3 moves, sometimes with STP)
+  if (type === "sto_g_to_g") {
     const molReact = givenGrams / mmReact;
     const molProd = molReact * ratio;
     const gramsProd = molProd * mmProd;
@@ -136,16 +371,16 @@ function buildSteps(type, ctx) {
         ${givenGrams} g ${chemHTML(react.sp)} × (1 mol / ${mmReact} g) = <strong>${roundSig(molReact)} mol ${chemHTML(react.sp)}</strong>
       </div>
       <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
-        ${molReact.toFixed(4)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+        ${roundSig(molReact)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
         = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
       </div>
       <div class="stepBox"><strong>Convert:</strong> moles → grams (product)<br><br>
-        ${molProd.toFixed(4)} mol ${chemHTML(prod.sp)} × (${mmProd} g / 1 mol) = <strong>${roundSig(gramsProd)} g ${chemHTML(prod.sp)}</strong>
+        ${roundSig(molProd)} mol ${chemHTML(prod.sp)} × (${mmProd} g / 1 mol) = <strong>${roundSig(gramsProd)} g ${chemHTML(prod.sp)}</strong>
       </div>
     `;
   }
 
-  if (type === "g_to_mol") {
+  if (type === "sto_g_to_mol") {
     const molReact = givenGrams / mmReact;
     const molProd = molReact * ratio;
 
@@ -154,38 +389,91 @@ function buildSteps(type, ctx) {
         ${givenGrams} g ${chemHTML(react.sp)} × (1 mol / ${mmReact} g) = <strong>${roundSig(molReact)} mol ${chemHTML(react.sp)}</strong>
       </div>
       <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
-        ${molReact.toFixed(4)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+        ${roundSig(molReact)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
         = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
       </div>
       <div class="stepBox"><strong>Done:</strong> target was moles of product.</div>
     `;
   }
 
-  // mol_to_g
-  const molReact = givenMoles;
-  const molProd = molReact * ratio;
-  const gramsProd = molProd * mmProd;
+  if (type === "sto_mol_to_g") {
+    const molProd = givenMoles * ratio;
+    const gramsProd = molProd * mmProd;
+
+    return `
+      <div class="stepBox"><strong>Start:</strong> already in moles (reactant)<br><br>
+        <strong>${givenMoles} mol ${chemHTML(react.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
+        ${givenMoles} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+        = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Convert:</strong> moles → grams (product)<br><br>
+        ${roundSig(molProd)} mol ${chemHTML(prod.sp)} × (${mmProd} g / 1 mol) = <strong>${roundSig(gramsProd)} g ${chemHTML(prod.sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "sto_L_to_g") {
+    const molReact = givenLiters / STP;
+    const molProd = molReact * ratio;
+    const gramsProd = molProd * mmProd;
+
+    return `
+      <div class="stepBox"><strong>Convert (STP):</strong> liters → moles (reactant)<br><br>
+        ${givenLiters} L ${chemHTML(react.sp)} × (1 mol / ${STP} L) = <strong>${roundSig(molReact)} mol ${chemHTML(react.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
+        ${roundSig(molReact)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+        = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Convert:</strong> moles → grams (product)<br><br>
+        ${roundSig(molProd)} mol ${chemHTML(prod.sp)} × (${mmProd} g / 1 mol) = <strong>${roundSig(gramsProd)} g ${chemHTML(prod.sp)}</strong>
+      </div>
+    `;
+  }
+
+  if (type === "sto_g_to_L") {
+    const molReact = givenGrams / mmReact;
+    const molProd = molReact * ratio;
+    const L = molProd * STP;
+
+    return `
+      <div class="stepBox"><strong>Convert:</strong> grams → moles (reactant)<br><br>
+        ${givenGrams} g ${chemHTML(react.sp)} × (1 mol / ${mmReact} g) = <strong>${roundSig(molReact)} mol ${chemHTML(react.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
+        ${roundSig(molReact)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+        = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
+      </div>
+      <div class="stepBox"><strong>Convert (STP):</strong> moles → liters (product)<br><br>
+        ${roundSig(molProd)} mol ${chemHTML(prod.sp)} × (${STP} L / 1 mol) = <strong>${roundSig(L)} L ${chemHTML(prod.sp)}</strong>
+      </div>
+    `;
+  }
+
+  // sto_L_to_L
+  const molReact2 = givenLiters / STP;
+  const molProd2 = molReact2 * ratio;
+  const L2 = molProd2 * STP;
 
   return `
-    <div class="stepBox"><strong>Start:</strong> already in moles (reactant)<br><br>
-      <strong>${givenMoles} mol ${chemHTML(react.sp)}</strong>
+    <div class="stepBox"><strong>Convert (STP):</strong> liters → moles (reactant)<br><br>
+      ${givenLiters} L ${chemHTML(react.sp)} × (1 mol / ${STP} L) = <strong>${roundSig(molReact2)} mol ${chemHTML(react.sp)}</strong>
     </div>
     <div class="stepBox"><strong>Ratio:</strong> use coefficients<br><br>
-      ${givenMoles} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
-      = <strong>${roundSig(molProd)} mol ${chemHTML(prod.sp)}</strong>
+      ${roundSig(molReact2)} mol ${chemHTML(react.sp)} × (${prod.coef} mol ${chemHTML(prod.sp)} / ${react.coef} mol ${chemHTML(react.sp)})
+      = <strong>${roundSig(molProd2)} mol ${chemHTML(prod.sp)}</strong>
     </div>
-    <div class="stepBox"><strong>Convert:</strong> moles → grams (product)<br><br>
-      ${molProd.toFixed(4)} mol ${chemHTML(prod.sp)} × (${mmProd} g / 1 mol) = <strong>${roundSig(gramsProd)} g ${chemHTML(prod.sp)}</strong>
+    <div class="stepBox"><strong>Convert (STP):</strong> moles → liters (product)<br><br>
+      ${roundSig(molProd2)} mol ${chemHTML(prod.sp)} × (${STP} L / 1 mol) = <strong>${roundSig(L2)} L ${chemHTML(prod.sp)}</strong>
     </div>
   `;
 }
 
-function normalizeNumber(s) {
-  const cleaned = String(s).replace(/,/g, "").trim();
-  const v = Number(cleaned);
-  return Number.isFinite(v) ? v : null;
-}
-
+// -------------------------------
+// Answer checking + hints
+// -------------------------------
 function checkAnswer() {
   const userVal = normalizeNumber(document.getElementById("answer").value);
   const unit = document.getElementById("unit").value;
@@ -218,23 +506,39 @@ function checkAnswer() {
   if (diff <= tol) {
     state.correct += 1;
     state.streak += 1;
-    setFeedback(`✅ Correct! Nice. (Expected about <strong>${roundSig(correct)}</strong> ${unit}.)`, true);
+    setFeedback(`✅ Correct! (Expected about <strong>${roundSig(correct)}</strong> ${unit}.)`, true);
   } else {
     state.streak = 0;
 
-    const ratioOff = Math.abs(userVal - (correct / p.ratio)) <= tol;
-    const mmMixUp = Math.abs(userVal - (correct * (p.mmReact / p.mmProd))) <= tol;
-
     let nudge = `Not quite. Expected about <strong>${roundSig(correct)}</strong> ${unit}.`;
 
-    if (p.type.includes("g_to") && !p.type.includes("g_to_mol")) {
-      nudge += `<br><span class="muted">Check: did you convert to <strong>moles</strong> before using the mole ratio?</span>`;
-    }
-    if (ratioOff) {
-      nudge += `<br><span class="muted">It looks like the <strong>mole ratio</strong> step may be missing or flipped.</span>`;
-    }
-    if (mmMixUp) {
-      nudge += `<br><span class="muted">It looks like a <strong>molar mass</strong> may be from the wrong substance.</span>`;
+    // “Common mistake” checks
+    if (p.mode === "stoich") {
+      // Missing ratio (or ratio flipped) sometimes looks like being off by a coefficient factor.
+      const altNoRatio = correct / p.ratio;
+      if (Math.abs(userVal - altNoRatio) <= tol) {
+        nudge += `<br><span class="muted">It looks like the <strong>mole ratio</strong> step may be missing or flipped.</span>`;
+      }
+
+      // If grams involved, wrong molar mass swap can happen
+      const mmSwapGuess = correct * (p.mmReact / p.mmProd);
+      if (Number.isFinite(mmSwapGuess) && Math.abs(userVal - mmSwapGuess) <= tol) {
+        nudge += `<br><span class="muted">It looks like a <strong>molar mass</strong> may be from the wrong substance.</span>`;
+      }
+
+      // If liters involved, wrong STP direction can happen
+      if (p.type.includes("_L_")) {
+        const stpFlipGuess = correct / (STP * STP); // crude “way too small” guess
+        if (Number.isFinite(stpFlipGuess) && Math.abs(userVal - stpFlipGuess) <= tol) {
+          nudge += `<br><span class="muted">Check the <strong>22.4 L/mol</strong> step direction (divide vs multiply).</span>`;
+        }
+      }
+    } else {
+      // conversion mode: ratio hint is irrelevant
+      nudge += `<br><span class="muted">Check: did you <strong>flip</strong> the factor so units cancel?</span>`;
+      if (p.type.includes("L")) {
+        nudge += `<br><span class="muted">For STP gases: use <strong>22.4 L = 1 mol</strong>.</span>`;
+      }
     }
 
     setFeedback(`❌ ${nudge}`, false);
@@ -247,6 +551,23 @@ function showHint() {
   const p = state.current;
   state.hintLevel = Math.min(state.hintLevel + 1, 3);
 
+  if (p.mode === "conversion") {
+    if (state.hintLevel === 1) {
+      setFeedback(`Hint 1: Decide if you need <strong>moles</strong> as the bridge. Many conversions go through moles.`, null);
+      return;
+    }
+    if (state.hintLevel === 2) {
+      const msg = p.type.includes("L")
+        ? `Hint 2: For STP gases: <strong>1 mol = 22.4 L</strong>. Choose multiply or divide so units cancel.`
+        : `Hint 2: Use molar mass: <strong>1 mol</strong> over <strong>g</strong> (or the flipped version) so units cancel.`;
+      setFeedback(msg, null);
+      return;
+    }
+    setFeedback(`Hint 3: Use <strong>Show steps</strong>, then try copying the structure on a new problem.`, null);
+    return;
+  }
+
+  // stoichiometry hints
   if (state.hintLevel === 1) {
     setFeedback(`Hint 1: Ask yourself: <strong>Do I have moles yet?</strong> If not, convert first.`, null);
     return;
@@ -274,6 +595,7 @@ function newProblem() {
   document.getElementById("problemText").innerHTML = state.current.prompt;
   document.getElementById("answer").value = "";
   document.getElementById("unit").value = state.current.askedUnit;
+
   setFeedback("Enter your answer and press <strong>Check</strong>.", null);
 
   setSteps("");
@@ -288,6 +610,14 @@ async function init() {
   document.getElementById("hint").addEventListener("click", showHint);
   document.getElementById("showSteps").addEventListener("click", showSteps);
   document.getElementById("newProblem").addEventListener("click", newProblem);
+
+  // Top “New problem” button
+  const topBtn = document.getElementById("newProblemTop");
+  if (topBtn) topBtn.addEventListener("click", newProblem);
+
+  // If focus changes, generate a fresh problem immediately
+  const focusEl = document.getElementById("focus");
+  if (focusEl) focusEl.addEventListener("change", newProblem);
 
   updateStats();
   newProblem();
