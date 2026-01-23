@@ -32,6 +32,26 @@
         </div>
       </div>
 
+      <div class="grid3" style="margin-bottom:14px;">
+        <div>
+          <label for="focus">Practice focus</label>
+          <select id="focus">
+            <option value="mixed" selected>Mixed random (recommended)</option>
+            <option value="conversion">Conversion only (same substance)</option>
+            <option value="stoich">Stoichiometry only (between substances)</option>
+          </select>
+        </div>
+        <div>
+          <label class="muted" style="display:block;">Units included</label>
+          <div class="muted" style="padding:10px 12px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;">
+            grams (g) • moles (mol) • liters (L, STP)
+          </div>
+        </div>
+        <div class="btnCol" style="justify-content:flex-end;">
+          <button id="newProblemTop" class="btn">New problem</button>
+        </div>
+      </div>
+
       <div id="problemText" class="problemText"></div>
 
       <div class="grid3">
@@ -44,7 +64,6 @@
           <select id="unit">
             <option value="g">grams (g)</option>
             <option value="mol">moles (mol)</option>
-            <option value="particles">particles</option>
             <option value="L">liters (L, STP)</option>
           </select>
         </div>
