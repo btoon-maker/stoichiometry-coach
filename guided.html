@@ -35,13 +35,31 @@
 
         <!-- STEP 1 -->
         <div class="guidedRow">
-          <h3 class="h3">Step 1: Choose the path</h3>
-          <p class="muted">Pick which moves you need from the Mole Map.</p>
+          <h3 class="h3">Step 1: Choose your practice type</h3>
+          <p class="muted">
+            Pick what you want to practice. The tool will automatically set the correct number of factor boxes.
+          </p>
 
-          <div class="pathChecks horiz" id="pathChecks"></div>
+          <div class="pathChecks horiz" style="gap:14px;">
+            <label class="checkRow" style="align-items:flex-start;">
+              <input type="radio" name="practiceMode" value="conversion" />
+              <span>
+                <strong>Conversion Practice (same substance)</strong><br />
+                <span class="muted">No mole ratio. 1–2 factors (example: liters → grams).</span>
+              </span>
+            </label>
 
-          <div class="miniNote">
-            <strong>Goal:</strong> Your path should be convert → ratio → convert.
+            <label class="checkRow" style="align-items:flex-start;">
+              <input type="radio" name="practiceMode" value="stoich" checked />
+              <span>
+                <strong>Stoichiometry Practice (between substances)</strong><br />
+                <span class="muted">Convert → ratio → convert. Always 3 factors.</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="miniNote" id="pathLine">
+            <strong>Path:</strong> Convert → Ratio → Convert (3 factors)
           </div>
         </div>
 
@@ -100,9 +118,9 @@
           <details class="note">
             <summary>How the tool checks you</summary>
             <ul class="bullets">
-              <li>It confirms you chose the correct path moves.</li>
-              <li>It checks each factor type (molar mass, mole ratio, etc.).</li>
+              <li>It checks each factor type (molar mass, STP conversion, mole ratio, etc.).</li>
               <li>It checks orientation so units cancel in the correct direction.</li>
+              <li>The number of slots is set automatically based on your practice type.</li>
             </ul>
           </details>
         </div>
