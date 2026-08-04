@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true"></div>
@@ -15,23 +17,24 @@
         <p class="subtitle">Use the Mole Map to choose the right path — then practice.</p>
       </div>
     </div>
-    <nav class="nav">
-      <a class="navlink active" href="index.html">Mole Map Coach</a>
+
+    <nav class="nav" aria-label="Stoichiometry Coach sections">
+      <a class="navlink active" href="index.html" aria-current="page">Mole Map Coach</a>
       <a class="navlink" href="guided.html">Guided Practice</a>
       <a class="navlink" href="practice.html">Independent Practice</a>
     </nav>
   </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>1) Choose your starting point and your target</h2>
+  <main id="main-content" class="container">
+    <section class="card" aria-labelledby="path-heading">
+      <h2 id="path-heading">1) Choose your starting point and your target</h2>
       <p class="muted">
         This tool reveals stoichiometry in <strong>three moves</strong>: convert → ratio → convert.
         <br />
         <strong>New:</strong> You can also use this to plan <strong>within-substance conversions</strong> (no mole ratio needed).
       </p>
 
-      <div class="grid2">
+      <div class="grid2" role="group" aria-labelledby="path-heading">
         <div>
           <label for="start" class="labelStrong">I have…</label>
           <select id="start">
@@ -64,26 +67,60 @@
       </div>
 
       <div class="actions">
-        <button id="buildPath" class="btn primary">Show my path</button>
-        <button id="reset" class="btn">Reset</button>
+        <button id="buildPath" class="btn primary" type="button">Show my path</button>
+        <button id="reset" class="btn" type="button">Reset</button>
       </div>
 
-      <div id="pathArea" class="pathArea" aria-live="polite"></div>
+      <div
+        id="pathArea"
+        class="pathArea"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
     </section>
 
-    <section class="card">
-      <h2>2) Mole Map (reference)</h2>
+    <section class="card" aria-labelledby="map-heading">
+      <h2 id="map-heading">2) Mole Map (reference)</h2>
       <p class="muted">
         Tip: If you get stuck, focus on one goal at a time: “Do I have moles yet?”
       </p>
 
-      <div class="mapWrap">
-        <img src="assets/mole-map.png" alt="Stoichiometry Mole Map" class="moleMap" />
-      </div>
+      <figure class="mapFigure">
+        <div class="mapWrap">
+          <img
+            src="assets/mole-map.png"
+            alt="Stoichiometry conversion map. A complete text version follows the image."
+            class="moleMap"
+            aria-describedby="mole-map-text"
+          />
+        </div>
+        <figcaption class="sr-only">
+          Visual reference showing how mass, particles, and gas volume connect through moles and how two substances connect through a mole ratio.
+        </figcaption>
+      </figure>
+
+      <details class="note moleMapDescription" id="mole-map-text">
+        <summary>Text version of the Mole Map</summary>
+        <div class="long-description">
+          <p>
+            Begin with the unit you have. Convert to moles when necessary. Use a mole ratio only when moving from one substance to another. Then convert from moles to the requested unit.
+          </p>
+          <ul class="bullets">
+            <li><strong>Grams to moles:</strong> divide by the substance’s molar mass in grams per mole.</li>
+            <li><strong>Moles to grams:</strong> multiply by the substance’s molar mass in grams per mole.</li>
+            <li><strong>Particles to moles:</strong> divide by 6.022 × 10<sup>23</sup> particles per mole.</li>
+            <li><strong>Moles to particles:</strong> multiply by 6.022 × 10<sup>23</sup> particles per mole.</li>
+            <li><strong>Liters of gas at STP to moles:</strong> divide by 22.4 liters per mole.</li>
+            <li><strong>Moles to liters of gas at STP:</strong> multiply by 22.4 liters per mole.</li>
+            <li><strong>Substance A to Substance B:</strong> use the balanced-equation coefficients as the mole-to-mole conversion ratio.</li>
+          </ul>
+        </div>
+      </details>
     </section>
 
-    <section class="card">
-      <h2>What students should remember</h2>
+    <section class="card" aria-labelledby="remember-heading">
+      <h2 id="remember-heading">What students should remember</h2>
       <ul class="bullets">
         <li><strong>Convert to moles</strong> if you aren’t already in moles.</li>
         <li><strong>Mole ratio</strong> always comes from the balanced equation coefficients (only needed when switching substances).</li>
@@ -92,7 +129,7 @@
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" aria-hidden="true">
     <span class="muted"></span>
   </footer>
 
