@@ -331,21 +331,15 @@ function buildConversionProblem() {
   const f_L_to_mol = { id: "stp_in", top: `1 mol ${sp}`, bottom: `22.4 L ${sp}`, flipped: false };
   const f_mol_to_L = { id: "stp_out", top: `22.4 L ${sp}`, bottom: `1 mol ${sp}`, flipped: false };
 
-  // Distractors
-  const d_mm_flipped = { id: "mm_flipped", top: `${mm} g ${sp}`, bottom: `1 mol ${sp}`, flipped: false }; // same as mm_out but labeled as distractor id
-  const d_stp_flipped = { id: "stp_flipped", top: `22.4 L ${sp}`, bottom: `1 mol ${sp}`, flipped: false }; // same as stp_out but labeled as distractor id
-
-  // NOTE: We will include real needed factors + some common wrong-direction distractors.
-  // We'll also include an "equation ratio" distractor so students don't think it's always needed.
+  // Include each valid conversion factor once.
+  // The mole-ratio card is the only distractor because a mole ratio is not
+  // needed when converting units within the same substance.
   factorBank.push(
     f_g_to_mol,
     f_mol_to_g,
     f_L_to_mol,
     f_mol_to_L,
-    // distractors
-    { id: "ratio_distractor", top: `2 mol ${sp}`, bottom: `1 mol ${sp}`, flipped: false },
-    { id: "mm_wrong_dir", top: `${mm} g ${sp}`, bottom: `1 mol ${sp}`, flipped: false },
-    { id: "stp_wrong_dir", top: `22.4 L ${sp}`, bottom: `1 mol ${sp}`, flipped: false }
+    { id: "ratio_distractor", top: `2 mol ${sp}`, bottom: `1 mol ${sp}`, flipped: false }
   );
 
   let prompt = "";
