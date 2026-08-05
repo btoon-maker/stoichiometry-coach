@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark" aria-hidden="true"></div>
@@ -15,18 +17,18 @@
         <p class="subtitle">Build the dimensional analysis setup — drag factors, flip them, and cancel units.</p>
       </div>
     </div>
-    <nav class="nav">
+    <nav class="nav" aria-label="Stoichiometry Coach sections">
       <a class="navlink" href="index.html">Mole Map Coach</a>
-      <a class="navlink active" href="guided.html">Guided Practice</a>
+      <a class="navlink active" href="guided.html" aria-current="page">Guided Practice</a>
       <a class="navlink" href="practice.html">Independent Practice</a>
     </nav>
   </header>
 
-  <main class="container">
-    <section class="card">
+  <main class="container" id="main-content" tabindex="-1">
+    <section class="card" aria-labelledby="guided-heading">
       <div class="row-between">
-        <h2>Guided problem</h2>
-        <button id="newGuided" class="btn">New problem</button>
+        <h2 id="guided-heading">Guided problem</h2>
+        <button id="newGuided" class="btn" type="button">New problem</button>
       </div>
 
       <div id="guidedProblemText" class="problemText"></div>
@@ -66,20 +68,27 @@
         <!-- STEP 2 -->
         <div class="guidedRow">
           <h3 class="h3">Step 2: Build the setup</h3>
-          <p class="muted">
-            Drag a factor into each box. If it’s upside down, click <strong>Flip</strong>.
+          <p class="muted" id="setupInstructions">
+            Drag a factor into each box, or use the <strong>Place in Box</strong> buttons in the factor bank.
+            If a factor is upside down, select <strong>Flip</strong>.
             Use the <strong>×</strong> signs as a reminder to multiply across.
-            We show the <strong>target unit</strong> only (not the final number).
+            We show the <strong>target unit</strong> only—not the final number.
           </p>
 
           <div class="equationBox">
-            <!-- Keep everything on one line; scroll only if needed -->
-            <div class="daLine noWrapLine" aria-label="Dimensional analysis setup line">
+            <div class="daLine noWrapLine" aria-label="Dimensional analysis setup line" aria-describedby="setupInstructions">
 
               <div class="givenBox">
                 <div class="frac">
                   <div class="num inlineNum">
-                    <input id="givenValue" class="input small" />
+                    <label for="givenValue" class="sr-only">Generated starting value</label>
+                    <input
+                      id="givenValue"
+                      class="input small"
+                      type="text"
+                      readonly
+                      aria-readonly="true"
+                    />
                     <span id="givenUnit" class="unitTag">g A</span>
                   </div>
                   <div class="bar"></div>
@@ -94,31 +103,33 @@
               <span class="times" aria-hidden="true">=</span>
 
               <div class="equalsBox">
-                <!-- target unit goes here -->
                 <span class="unitTag unitTagNeutral" id="targetUnitTag">g ?</span>
               </div>
             </div>
 
             <div class="actions">
-              <button id="checkSetup" class="btn primary">Check my setup</button>
-              <button id="showCorrectSetup" class="btn">Show correct setup</button>
+              <button id="checkSetup" class="btn primary" type="button">Check my setup</button>
+              <button id="showCorrectSetup" class="btn" type="button">Show correct setup</button>
             </div>
 
-            <div id="setupFeedback" class="feedback" aria-live="polite"></div>
+            <div id="setupFeedback" class="feedback" aria-live="polite" aria-atomic="true"></div>
           </div>
         </div>
 
         <!-- FACTOR BANK -->
         <div class="guidedRow">
           <h3 class="h3">Factor bank</h3>
-          <p class="muted">Drag these into the slots.</p>
+          <p class="muted">
+            Drag a factor into a box, or use its Box button. You can place the same factor again if needed.
+          </p>
 
           <div id="bank" class="bank bankRow"></div>
 
           <details class="note">
             <summary>How the tool checks you</summary>
             <ul class="bullets">
-              <li>It checks each factor type (molar mass, STP conversion, mole ratio, etc.).</li>
+              <li>It checks the displayed numerator and denominator of each factor.</li>
+              <li>Equivalent factors are accepted even when they came from a different card or appear in a different box order.</li>
               <li>It checks orientation so units cancel in the correct direction.</li>
               <li>The number of slots is set automatically based on your practice type.</li>
             </ul>
@@ -151,12 +162,12 @@
                   <input id="finalAnswer" class="input" type="text" inputmode="decimal" placeholder="e.g., 31.5" />
                 </div>
                 <div class="finalBtnCol">
-                  <button id="checkFinal" class="btn primary">Check my final answer</button>
-                  <button id="revealFinal" class="btn">Show expected answer</button>
+                  <button id="checkFinal" class="btn primary" type="button">Check my final answer</button>
+                  <button id="revealFinal" class="btn" type="button">Show expected answer</button>
                 </div>
               </div>
 
-              <div id="finalFeedback" class="feedback" aria-live="polite"></div>
+              <div id="finalFeedback" class="feedback" aria-live="polite" aria-atomic="true"></div>
             </div>
           </div>
         </div>
