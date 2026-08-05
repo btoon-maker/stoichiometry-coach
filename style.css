@@ -712,3 +712,54 @@ summary:focus-visible,
     border-style:dashed;
   }
 }
+
+/* --- Guided Practice accessible placement controls --- */
+.input[readonly]{
+  background:#F2F2F2;
+  color:var(--gray-1);
+  cursor:default;
+}
+
+.factor{
+  cursor:grab;
+}
+
+.factorFraction{
+  display:flex;
+  justify-content:center;
+}
+
+.factorPlaceLabel{
+  margin-top:10px;
+  font-size:12px;
+  font-weight:800;
+  color:var(--gray-2);
+}
+
+.factorActions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:6px;
+}
+
+.factorPlaceBtn{
+  flex:1 1 62px;
+  min-height:40px;
+  padding:8px 9px;
+}
+
+.factor:focus-within{
+  outline:3px solid var(--accent);
+  outline-offset:3px;
+}
+
+@media (pointer:coarse){
+  .factor{
+    cursor:default;
+  }
+
+  .factorPlaceBtn{
+    min-height:44px;
+  }
+}
