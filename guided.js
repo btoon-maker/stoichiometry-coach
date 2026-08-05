@@ -57,24 +57,60 @@ function setPathLine(text) {
 }
 
 // ------------------------------
-// Drag factor cards
+// Factor cards: drag, touch, and keyboard placement
 // ------------------------------
+function displayedSides(factor) {
+  return factor.flipped
+    ? { top: factor.bottom, bottom: factor.top }
+    : { top: factor.top, bottom: factor.bottom };
+}
+
 function makeFactorCard(factor) {
   const div = document.createElement("div");
   div.className = "factor";
   div.draggable = true;
   div.dataset.factorId = factor.id;
+  div.setAttribute("role", "group");
+  div.setAttribute(
+    "aria-label",
+    `Conversion factor. Numerator ${factor.top}. Denominator ${factor.bottom}.`
+  );
+
+  const boxButtons = Array.from({ length: state.slotCount }, (_, slotIndex) => `
+    <button
+      type="button"
+      class="btn tiny factorPlaceBtn"
+      data-factor-id="${factor.id}"
+      data-slot="${slotIndex}"
+      aria-label="Place this factor in Box ${slotIndex + 1}"
+    >
+      Box ${slotIndex + 1}
+    </button>
+  `).join("");
 
   div.innerHTML = `
-    <div class="frac mini">
-      <div class="num">${chemHTML(factor.top)}</div>
-      <div class="bar"></div>
-      <div class="den">${chemHTML(factor.bottom)}</div>
+    <div class="factorFraction" aria-hidden="true">
+      <div class="frac mini">
+        <div class="num">${chemHTML(factor.top)}</div>
+        <div class="bar"></div>
+        <div class="den">${chemHTML(factor.bottom)}</div>
+      </div>
     </div>
+    <div class="factorPlaceLabel">Place in:</div>
+    <div class="factorActions">${boxButtons}</div>
   `;
 
   div.addEventListener("dragstart", (e) => {
     e.dataTransfer.setData("text/plain", factor.id);
+    e.dataTransfer.effectAllowed = "copy";
+  });
+
+  div.querySelectorAll(".factorPlaceBtn").forEach(button => {
+    button.addEventListener("click", () => {
+      const slotIndex = Number(button.dataset.slot);
+      placeFactor(slotIndex, button.dataset.factorId);
+      setSetupFeedback(`Placed the selected factor in <strong>Box ${slotIndex + 1}</strong>.`, null);
+    });
   });
 
   return div;
@@ -83,26 +119,29 @@ function makeFactorCard(factor) {
 function renderBank() {
   const bank = document.getElementById("bank");
   bank.innerHTML = "";
-  state.problem.factorBank.forEach(f => bank.appendChild(makeFactorCard(f)));
+  state.problem.factorBank.forEach(factor => bank.appendChild(makeFactorCard(factor)));
 }
 
 function makePlacedFactor(slotIndex, factor) {
   const wrap = document.createElement("div");
   wrap.className = "placed";
 
-  const top = factor.flipped ? factor.bottom : factor.top;
-  const bottom = factor.flipped ? factor.top : factor.bottom;
+  const { top, bottom } = displayedSides(factor);
 
   wrap.innerHTML = `
     <div class="placedInner">
-      <div class="frac mini">
-        <div class="num">${chemHTML(top)}</div>
-        <div class="bar"></div>
-        <div class="den">${chemHTML(bottom)}</div>
+      <div
+        class="frac mini"
+        role="img"
+        aria-label="Numerator ${top}. Denominator ${bottom}."
+      >
+        <div class="num" aria-hidden="true">${chemHTML(top)}</div>
+        <div class="bar" aria-hidden="true"></div>
+        <div class="den" aria-hidden="true">${chemHTML(bottom)}</div>
       </div>
       <div class="placedBtns">
-        <button class="btn tiny" data-action="flip" data-slot="${slotIndex}">Flip</button>
-        <button class="btn tiny" data-action="clear" data-slot="${slotIndex}">Clear</button>
+        <button type="button" class="btn tiny" data-action="flip" data-slot="${slotIndex}">Flip</button>
+        <button type="button" class="btn tiny" data-action="clear" data-slot="${slotIndex}">Clear</button>
       </div>
     </div>
   `;
@@ -111,8 +150,11 @@ function makePlacedFactor(slotIndex, factor) {
 }
 
 function placeFactor(slotIndex, factorId) {
-  const factor = state.problem.factorBank.find(f => f.id === factorId);
+  if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= state.slotCount) return;
+
+  const factor = state.problem.factorBank.find(item => item.id === factorId);
   if (!factor) return;
+
   state.slots[slotIndex] = { ...factor };
   renderSlots();
 }
@@ -121,30 +163,40 @@ function renderSlots() {
   const slotsWrap = document.getElementById("slots");
   slotsWrap.innerHTML = "";
 
-  const count = state.slotCount;
-
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < state.slotCount; i++) {
     const slot = document.createElement("div");
     slot.className = "slot";
     slot.dataset.slot = String(i);
+    slot.setAttribute("role", "group");
+    slot.setAttribute("aria-label", `Factor Box ${i + 1}`);
 
-    slot.addEventListener("dragover", (e) => e.preventDefault());
+    slot.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+
     slot.addEventListener("drop", (e) => {
       e.preventDefault();
       const id = e.dataTransfer.getData("text/plain");
       placeFactor(i, id);
+      setSetupFeedback(`Placed the selected factor in <strong>Box ${i + 1}</strong>.`, null);
     });
 
     const current = state.slots[i];
     if (!current) {
-      slot.innerHTML = `<div class="slotHint">Drop factor here</div>`;
+      slot.innerHTML = `
+        <div class="slotHint">
+          <strong>Box ${i + 1}</strong><br />
+          Drop a factor here or use a Box ${i + 1} button below.
+        </div>
+      `;
     } else {
       slot.appendChild(makePlacedFactor(i, current));
     }
 
     slotsWrap.appendChild(slot);
 
-    if (i < count - 1) {
+    if (i < state.slotCount - 1) {
       const times = document.createElement("span");
       times.className = "times";
       times.textContent = "×";
@@ -153,19 +205,22 @@ function renderSlots() {
     }
   }
 
-  slotsWrap.querySelectorAll("button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const action = btn.dataset.action;
-      const slotIndex = Number(btn.dataset.slot);
-      if (!Number.isFinite(slotIndex)) return;
+  slotsWrap.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.action;
+      const slotIndex = Number(button.dataset.slot);
+      if (!Number.isInteger(slotIndex)) return;
 
       if (action === "flip" && state.slots[slotIndex]) {
         state.slots[slotIndex].flipped = !state.slots[slotIndex].flipped;
         renderSlots();
+        setSetupFeedback(`Flipped the factor in <strong>Box ${slotIndex + 1}</strong>.`, null);
       }
+
       if (action === "clear") {
         state.slots[slotIndex] = null;
         renderSlots();
+        setSetupFeedback(`Cleared <strong>Box ${slotIndex + 1}</strong>.`, null);
       }
     });
   });
@@ -174,65 +229,105 @@ function renderSlots() {
 // ------------------------------
 // Correctness logic
 // ------------------------------
-function setupIsCorrect() {
-  // Must fill all slots shown
-  for (let i = 0; i < state.slotCount; i++) if (!state.slots[i]) return false;
+function normalizeFactorText(text) {
+  return String(text ?? "").replace(/\s+/g, " ").trim();
+}
 
-  const expected = state.problem.correct;
-  if (expected.length !== state.slotCount) return false;
+function factorSignature(factor) {
+  const { top, bottom } = displayedSides(factor);
+  return `${normalizeFactorText(top)}|||${normalizeFactorText(bottom)}`;
+}
 
-  for (let i = 0; i < state.slotCount; i++) {
-    const placed = state.slots[i];
-    const need = expected[i];
-    if (placed.id !== need.id) return false;
-    if (placed.flipped !== need.flipped) return false;
+function inverseSignature(factor) {
+  const { top, bottom } = displayedSides(factor);
+  return `${normalizeFactorText(bottom)}|||${normalizeFactorText(top)}`;
+}
+
+function expectedDisplayedFactors() {
+  return state.problem.correct.map(requirement => {
+    const source = state.problem.factorBank.find(factor => factor.id === requirement.id);
+    if (!source) throw new Error(`Missing expected factor: ${requirement.id}`);
+    return { ...source, flipped: requirement.flipped };
+  });
+}
+
+function compareSetup() {
+  const emptySlots = [];
+  state.slots.forEach((factor, index) => {
+    if (!factor) emptySlots.push(index);
+  });
+
+  if (emptySlots.length) {
+    return { ok: false, emptySlots, unmatchedPlaced: [] };
   }
-  return true;
+
+  const remainingExpected = expectedDisplayedFactors().map(factorSignature);
+  const unmatchedPlaced = [];
+
+  state.slots.forEach((factor, slotIndex) => {
+    const signature = factorSignature(factor);
+    const matchIndex = remainingExpected.indexOf(signature);
+
+    if (matchIndex >= 0) {
+      remainingExpected.splice(matchIndex, 1);
+    } else {
+      unmatchedPlaced.push({ factor, slotIndex });
+    }
+  });
+
+  return {
+    ok: unmatchedPlaced.length === 0 && remainingExpected.length === 0,
+    emptySlots: [],
+    unmatchedPlaced,
+    remainingExpected
+  };
+}
+
+function setupIsCorrect() {
+  return compareSetup().ok;
 }
 
 function checkSetup() {
-  // Empty slots?
-  for (let i = 0; i < state.slotCount; i++) {
-    if (!state.slots[i]) {
-      setSetupFeedback("You still have an empty box. Drag a factor into <strong>each</strong> box.", false);
-      return;
-    }
-  }
+  const comparison = compareSetup();
 
-  const expected = state.problem.correct;
-  const errors = [];
-
-  for (let i = 0; i < state.slotCount; i++) {
-    const placed = state.slots[i];
-    const need = expected[i];
-
-    if (placed.id !== need.id) {
-      errors.push(`Box ${i + 1}: wrong factor.`);
-      continue;
-    }
-    if (placed.flipped !== need.flipped) {
-      errors.push(
-        `Box ${i + 1}: correct factor, but it needs to be <strong>${need.flipped ? "flipped" : "not flipped"}</strong> so units cancel.`
-      );
-    }
-  }
-
-  if (errors.length) {
-    setSetupFeedback(`❌ Not yet. Fix these:<br><ul>${errors.map(e => `<li>${e}</li>`).join("")}</ul>`, false);
+  if (comparison.emptySlots.length) {
+    const boxes = comparison.emptySlots.map(index => index + 1).join(", ");
+    setSetupFeedback(
+      `Complete every factor box before checking. Empty box${comparison.emptySlots.length === 1 ? "" : "es"}: <strong>${boxes}</strong>.`,
+      false
+    );
     return;
   }
 
-  setSetupFeedback("✅ Setup correct! Units cancel properly. Now do the math in <strong>Step 3</strong> and check your final number.", true);
+  if (comparison.ok) {
+    setSetupFeedback(
+      "✅ Setup correct! The displayed factors are mathematically equivalent and the units cancel properly. Now do the math in <strong>Step 3</strong>.",
+      true
+    );
+    return;
+  }
+
+  const expectedSignatures = expectedDisplayedFactors().map(factorSignature);
+  const errors = comparison.unmatchedPlaced.map(({ factor, slotIndex }) => {
+    if (expectedSignatures.includes(inverseSignature(factor))) {
+      return `Box ${slotIndex + 1}: this factor is upside down. Select <strong>Flip</strong>.`;
+    }
+    return `Box ${slotIndex + 1}: this displayed factor is not needed for the requested path.`;
+  });
+
+  setSetupFeedback(
+    `❌ Not yet. Check the following:<ul>${errors.map(error => `<li>${error}</li>`).join("")}</ul>`,
+    false
+  );
 }
 
 function showCorrectSetup() {
-  const need = state.problem.correct;
-  state.slots = need.map(req => {
-    const f = state.problem.factorBank.find(x => x.id === req.id);
-    return { ...f, flipped: req.flipped };
-  });
+  state.slots = expectedDisplayedFactors();
   renderSlots();
-  setSetupFeedback("Here’s the correct setup. Notice how the units cancel step-by-step.", null);
+  setSetupFeedback(
+    "Here’s one correct setup. Equivalent factors and a different factor order will also be accepted when the units cancel correctly.",
+    null
+  );
 }
 
 // ------------------------------
@@ -298,139 +393,168 @@ function buildStoichProblem() {
 // Supports grams↔moles, liters(STP)↔moles, and 2-step grams↔liters via moles.
 // (You can extend later to particles if you want.)
 function buildConversionProblem() {
-  const rxn = DATA.reactions[rnd(0, DATA.reactions.length - 1)];
-  const parsed = parseEquation(rxn.equation);
-
-  // pick any species from either side
-  const all = [...parsed.reactants, ...parsed.products];
-  const pick = all[rnd(0, all.length - 1)];
-  const sp = pick.sp;
-
-  const mm = toNum(rxn.species[sp].molarMass);
-
-  // choose conversion type
-  // 1-step: g->mol, mol->g, L->mol, mol->L
-  // 2-step: L->g, g->L
+  // Choose the pathway first so liter-based questions can be limited to gases at STP.
   const types = ["g_to_mol", "mol_to_g", "L_to_mol", "mol_to_L", "L_to_g", "g_to_L"];
   const type = types[rnd(0, types.length - 1)];
+  const usesGasVolume = type.includes("L");
 
-  // generate a reasonable given number by type
+  const candidates = [];
+
+  DATA.reactions.forEach(rxn => {
+    const parsed = parseEquation(rxn.equation);
+    const uniqueSpecies = [...new Set(
+      [...parsed.reactants, ...parsed.products].map(item => item.sp)
+    )];
+
+    uniqueSpecies.forEach(sp => {
+      const speciesData = rxn.species[sp];
+      if (!speciesData) return;
+
+      // Require an explicit true flag for any liters-at-STP problem.
+      if (usesGasVolume && speciesData.gasAtSTP !== true) return;
+
+      candidates.push({ rxn, sp, speciesData });
+    });
+  });
+
+  if (!candidates.length) {
+    throw new Error("No eligible substances are available for this conversion type.");
+  }
+
+  const choice = candidates[rnd(0, candidates.length - 1)];
+  const sp = choice.sp;
+  const mm = toNum(choice.speciesData.molarMass);
+
   let givenValue = 10;
-  if (type.includes("mol")) givenValue = Number((Math.random() * 2 + 0.2).toFixed(2)); // 0.20–2.20 mol
-  if (type.includes("g_to") || type.includes("L_to")) givenValue = rnd(5, 45);          // 5–45 g or L
-  if (type === "mol_to_L") givenValue = Number((Math.random() * 1.5 + 0.2).toFixed(2));
+  if (type.includes("mol")) {
+    givenValue = Number((Math.random() * 2 + 0.2).toFixed(2));
+  }
+  if (type.includes("g_to") || type.includes("L_to")) {
+    givenValue = rnd(5, 45);
+  }
+  if (type === "mol_to_L") {
+    givenValue = Number((Math.random() * 1.5 + 0.2).toFixed(2));
+  }
 
-  // Build factors & correct answer
   const factorBank = [];
   const correct = [];
 
-  // Core factors we may need
-  const f_g_to_mol = { id: "mm_in", top: `1 mol ${sp}`, bottom: `${mm} g ${sp}`, flipped: false };
-  const f_mol_to_g = { id: "mm_out", top: `${mm} g ${sp}`, bottom: `1 mol ${sp}`, flipped: false };
+  const f_g_to_mol = {
+    id: "mm_in",
+    top: `1 mol ${sp}`,
+    bottom: `${mm} g ${sp}`,
+    flipped: false
+  };
+  const f_mol_to_g = {
+    id: "mm_out",
+    top: `${mm} g ${sp}`,
+    bottom: `1 mol ${sp}`,
+    flipped: false
+  };
+  const f_L_to_mol = {
+    id: "stp_in",
+    top: `1 mol ${sp}`,
+    bottom: `22.4 L ${sp}`,
+    flipped: false
+  };
+  const f_mol_to_L = {
+    id: "stp_out",
+    top: `22.4 L ${sp}`,
+    bottom: `1 mol ${sp}`,
+    flipped: false
+  };
 
-  const f_L_to_mol = { id: "stp_in", top: `1 mol ${sp}`, bottom: `22.4 L ${sp}`, flipped: false };
-  const f_mol_to_L = { id: "stp_out", top: `22.4 L ${sp}`, bottom: `1 mol ${sp}`, flipped: false };
+  factorBank.push(f_g_to_mol, f_mol_to_g);
 
-  // Include each valid conversion factor once.
-  // The mole-ratio card is the only distractor because a mole ratio is not
-  // needed when converting units within the same substance.
-  factorBank.push(
-    f_g_to_mol,
-    f_mol_to_g,
-    f_L_to_mol,
-    f_mol_to_L,
-    { id: "ratio_distractor", top: `2 mol ${sp}`, bottom: `1 mol ${sp}`, flipped: false }
-  );
+  // Only show gas-volume factors for substances that are gases at STP.
+  if (choice.speciesData.gasAtSTP === true) {
+    factorBank.push(f_L_to_mol, f_mol_to_L);
+  }
+
+  factorBank.push({
+    id: "ratio_distractor",
+    top: `2 mol ${sp}`,
+    bottom: `1 mol ${sp}`,
+    flipped: false
+  });
 
   let prompt = "";
   let givenUnitHTML = "";
   let targetUnitHTML = "";
   let correctValue = NaN;
+  let slotCount = 1;
 
   if (type === "g_to_mol") {
-    state.slotCount = 1;
+    slotCount = 1;
     correct.push({ id: "mm_in", flipped: false });
     correctValue = givenValue / mm;
-
     prompt = `Convert within one substance (no mole ratio needed).<br>
       If you start with <strong>${givenValue} g</strong> of <strong>${chemHTML(sp)}</strong>,
       build the setup to find <strong>moles</strong> of <strong>${chemHTML(sp)}</strong>.`;
-
     givenUnitHTML = chemHTML(`g ${sp}`);
     targetUnitHTML = chemHTML(`mol ${sp}`);
   }
 
   if (type === "mol_to_g") {
-    state.slotCount = 1;
+    slotCount = 1;
     correct.push({ id: "mm_out", flipped: false });
     correctValue = givenValue * mm;
-
     prompt = `Convert within one substance (no mole ratio needed).<br>
       If you start with <strong>${givenValue} mol</strong> of <strong>${chemHTML(sp)}</strong>,
       build the setup to find <strong>grams</strong> of <strong>${chemHTML(sp)}</strong>.`;
-
     givenUnitHTML = chemHTML(`mol ${sp}`);
     targetUnitHTML = chemHTML(`g ${sp}`);
   }
 
   if (type === "L_to_mol") {
-    state.slotCount = 1;
+    slotCount = 1;
     correct.push({ id: "stp_in", flipped: false });
     correctValue = givenValue / 22.4;
-
     prompt = `Convert within one substance (gas at STP — no mole ratio needed).<br>
       If you start with <strong>${givenValue} L</strong> of <strong>${chemHTML(sp)}</strong> (at STP),
       build the setup to find <strong>moles</strong> of <strong>${chemHTML(sp)}</strong>.`;
-
     givenUnitHTML = chemHTML(`L ${sp}`);
     targetUnitHTML = chemHTML(`mol ${sp}`);
   }
 
   if (type === "mol_to_L") {
-    state.slotCount = 1;
+    slotCount = 1;
     correct.push({ id: "stp_out", flipped: false });
     correctValue = givenValue * 22.4;
-
     prompt = `Convert within one substance (gas at STP — no mole ratio needed).<br>
       If you start with <strong>${givenValue} mol</strong> of <strong>${chemHTML(sp)}</strong>,
       build the setup to find <strong>liters</strong> of <strong>${chemHTML(sp)}</strong> (at STP).`;
-
     givenUnitHTML = chemHTML(`mol ${sp}`);
     targetUnitHTML = chemHTML(`L ${sp}`);
   }
 
   if (type === "L_to_g") {
-    state.slotCount = 2;
+    slotCount = 2;
     correct.push({ id: "stp_in", flipped: false });
     correct.push({ id: "mm_out", flipped: false });
     correctValue = (givenValue / 22.4) * mm;
-
     prompt = `Convert within one substance (gas at STP — no mole ratio needed).<br>
       If you start with <strong>${givenValue} L</strong> of <strong>${chemHTML(sp)}</strong> (at STP),
       build the setup to find <strong>grams</strong> of <strong>${chemHTML(sp)}</strong>.`;
-
     givenUnitHTML = chemHTML(`L ${sp}`);
     targetUnitHTML = chemHTML(`g ${sp}`);
   }
 
   if (type === "g_to_L") {
-    state.slotCount = 2;
+    slotCount = 2;
     correct.push({ id: "mm_in", flipped: false });
     correct.push({ id: "stp_out", flipped: false });
     correctValue = (givenValue / mm) * 22.4;
-
     prompt = `Convert within one substance (gas at STP — no mole ratio needed).<br>
       If you start with <strong>${givenValue} g</strong> of <strong>${chemHTML(sp)}</strong>,
       build the setup to find <strong>liters</strong> of <strong>${chemHTML(sp)}</strong> (at STP).`;
-
     givenUnitHTML = chemHTML(`g ${sp}`);
     targetUnitHTML = chemHTML(`L ${sp}`);
   }
 
-  // Return in a shared structure used by render + checker
   return {
     mode: "conversion",
-    slotCount: state.slotCount,
+    slotCount,
     prompt,
     factorBank,
     correct,
@@ -462,14 +586,17 @@ function renderProblem() {
     );
   }
 
-  renderBank();
-
   state.slotCount = state.problem.slotCount;
   state.slots = Array.from({ length: state.slotCount }, () => null);
+
+  renderBank();
   renderSlots();
 
   document.getElementById("finalAnswer").value = "";
-  setSetupFeedback("Drag factors into each box, then click <strong>Check my setup</strong>.", null);
+  setSetupFeedback(
+    "Drag factors into the boxes or use the <strong>Box buttons</strong>, then select <strong>Check my setup</strong>.",
+    null
+  );
   setFinalFeedback("Enter your final number and click <strong>Check my final answer</strong>.", null);
 }
 
@@ -537,8 +664,18 @@ function applyModeFromUI() {
 }
 
 async function init() {
-  const res = await fetch("problems.json");
-  DATA = await res.json();
+  try {
+    const res = await fetch("problems.json");
+    if (!res.ok) throw new Error(`Unable to load problems.json (${res.status}).`);
+    DATA = await res.json();
+  } catch (error) {
+    console.error(error);
+    setSetupFeedback(
+      "The practice problems could not be loaded. Refresh the page or contact your teacher if the problem continues.",
+      false
+    );
+    return;
+  }
 
   // Mode selector listeners
   document.querySelectorAll('input[name="practiceMode"]').forEach(r => {
