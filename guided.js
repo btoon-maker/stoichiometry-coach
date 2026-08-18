@@ -5,7 +5,8 @@ const state = {
   problem: null,
   slotCount: 3,
   slots: [],
-  selectedFactorId: null
+  selectedFactorId: null,
+  pendingMode: null
 };
 
 function rnd(min, max) {
@@ -1334,6 +1335,138 @@ function applyModeFromUI() {
     : "stoich";
 }
 
+
+function guidedHasProgress() {
+  const hasPlacedFactor =
+    Array.isArray(state.slots) &&
+    state.slots.some(Boolean);
+
+  const finalAnswer =
+    document.getElementById("finalAnswer");
+
+  const hasTypedFinalAnswer =
+    Boolean(
+      finalAnswer &&
+      finalAnswer.value.trim()
+    );
+
+  return hasPlacedFactor || hasTypedFinalAnswer;
+}
+
+function setPracticeModeRadio(mode) {
+  const radio =
+    document.querySelector(
+      `input[name="practiceMode"][value="${mode}"]`
+    );
+
+  if (radio) {
+    radio.checked = true;
+  }
+}
+
+function closeModeChangeDialog() {
+  const dialog =
+    document.getElementById("modeChangeDialog");
+
+  if (dialog && dialog.open) {
+    dialog.close();
+  }
+}
+
+function cancelModeChange() {
+  state.pendingMode = null;
+
+  setPracticeModeRadio(state.mode);
+  closeModeChangeDialog();
+
+  const activeRadio =
+    document.querySelector(
+      `input[name="practiceMode"][value="${state.mode}"]`
+    );
+
+  if (activeRadio) {
+    activeRadio.focus();
+  }
+}
+
+function confirmModeChange() {
+  if (!state.pendingMode) {
+    return;
+  }
+
+  const requestedMode = state.pendingMode;
+  state.pendingMode = null;
+  state.mode = requestedMode;
+
+  setPracticeModeRadio(requestedMode);
+  closeModeChangeDialog();
+
+  state.problem =
+    buildProblemForMode(state.mode);
+
+  renderProblem();
+
+  const activeRadio =
+    document.querySelector(
+      `input[name="practiceMode"][value="${state.mode}"]`
+    );
+
+  if (activeRadio) {
+    activeRadio.focus();
+  }
+}
+
+function requestModeChange(requestedMode) {
+  if (requestedMode === state.mode) {
+    return;
+  }
+
+  if (!guidedHasProgress()) {
+    state.mode = requestedMode;
+
+    state.problem =
+      buildProblemForMode(state.mode);
+
+    renderProblem();
+    return;
+  }
+
+  state.pendingMode = requestedMode;
+
+  // Keep the current radio selected while the student decides.
+  setPracticeModeRadio(state.mode);
+
+  const dialog =
+    document.getElementById("modeChangeDialog");
+
+  const keepWorkingButton =
+    document.getElementById("keepWorking");
+
+  if (
+    dialog &&
+    typeof dialog.showModal === "function"
+  ) {
+    dialog.showModal();
+
+    if (keepWorkingButton) {
+      keepWorkingButton.focus();
+    }
+
+    return;
+  }
+
+  // Graceful fallback if <dialog> is unavailable.
+  const shouldChange = window.confirm(
+    "Change practice type?\n\nYour current problem and progress will be cleared."
+  );
+
+  if (shouldChange) {
+    confirmModeChange();
+  } else {
+    cancelModeChange();
+  }
+}
+
 async function init() {
   try {
     const response = await fetch(
@@ -1364,12 +1497,7 @@ async function init() {
     )
     .forEach(radio => {
       radio.addEventListener("change", () => {
-        applyModeFromUI();
-
-        state.problem =
-          buildProblemForMode(state.mode);
-
-        renderProblem();
+        requestModeChange(radio.value);
       });
     });
 
@@ -1411,6 +1539,39 @@ async function init() {
       "click",
       revealFinal
     );
+
+  const keepWorkingButton =
+    document.getElementById("keepWorking");
+
+  if (keepWorkingButton) {
+    keepWorkingButton.addEventListener(
+      "click",
+      cancelModeChange
+    );
+  }
+
+  const confirmModeChangeButton =
+    document.getElementById("confirmModeChange");
+
+  if (confirmModeChangeButton) {
+    confirmModeChangeButton.addEventListener(
+      "click",
+      confirmModeChange
+    );
+  }
+
+  const modeChangeDialog =
+    document.getElementById("modeChangeDialog");
+
+  if (modeChangeDialog) {
+    modeChangeDialog.addEventListener(
+      "cancel",
+      event => {
+        event.preventDefault();
+        cancelModeChange();
+      }
+    );
+  }
 
   applyModeFromUI();
 
