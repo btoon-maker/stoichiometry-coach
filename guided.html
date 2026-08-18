@@ -169,6 +169,39 @@
     <span class="muted">Guided Practice focuses on setup + unit cancellation, then calculation confidence.</span>
   </footer>
 
+
+  <dialog
+    id="modeChangeDialog"
+    class="confirmDialog"
+    aria-labelledby="modeChangeTitle"
+    aria-describedby="modeChangeDescription"
+  >
+    <div class="confirmDialogContent">
+      <h2 id="modeChangeTitle">Change practice type?</h2>
+      <p id="modeChangeDescription">
+        Your current problem and progress will be cleared.
+      </p>
+
+      <div class="confirmDialogActions">
+        <button
+          type="button"
+          id="keepWorking"
+          class="btn primary"
+        >
+          Keep working
+        </button>
+
+        <button
+          type="button"
+          id="confirmModeChange"
+          class="btn"
+        >
+          Change practice type
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <script src="guided.js?v=20260804b"></script>
 </body>
 </html>
