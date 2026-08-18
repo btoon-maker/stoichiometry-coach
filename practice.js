@@ -7,7 +7,9 @@ const state = {
   streak: 0,
   correct: 0,
   total: 0,
-  hintLevel: 0
+  hintLevel: 0,
+  activeFocus: "mixed",
+  pendingFocus: null
 };
 
 // Convert only formula digits to subscripts (NOT coefficients).
@@ -695,6 +697,125 @@ function newProblem() {
   document.getElementById("stepsBox").open = false;
 }
 
+
+function practiceHasProgress() {
+  const answerEl = document.getElementById("answer");
+  const unitEl = document.getElementById("unit");
+  const stepsBox = document.getElementById("stepsBox");
+
+  const hasTypedAnswer =
+    Boolean(answerEl && answerEl.value.trim());
+
+  const hasChangedUnit =
+    Boolean(
+      state.current &&
+      unitEl &&
+      unitEl.value !== state.current.askedUnit
+    );
+
+  const hasUsedHint = state.hintLevel > 0;
+  const hasViewedSteps = Boolean(stepsBox && stepsBox.open);
+
+  return (
+    hasTypedAnswer ||
+    hasChangedUnit ||
+    hasUsedHint ||
+    hasViewedSteps
+  );
+}
+
+function closeModeChangeDialog() {
+  const dialog = document.getElementById("modeChangeDialog");
+
+  if (dialog && dialog.open) {
+    dialog.close();
+  }
+}
+
+function cancelFocusChange() {
+  const focusEl = document.getElementById("focus");
+
+  state.pendingFocus = null;
+
+  if (focusEl) {
+    focusEl.value = state.activeFocus;
+  }
+
+  closeModeChangeDialog();
+
+  if (focusEl) {
+    focusEl.focus();
+  }
+}
+
+function confirmFocusChange() {
+  if (!state.pendingFocus) {
+    return;
+  }
+
+  const focusEl = document.getElementById("focus");
+  const requestedFocus = state.pendingFocus;
+
+  state.pendingFocus = null;
+  state.activeFocus = requestedFocus;
+
+  if (focusEl) {
+    focusEl.value = requestedFocus;
+  }
+
+  closeModeChangeDialog();
+  newProblem();
+
+  if (focusEl) {
+    focusEl.focus();
+  }
+}
+
+function requestFocusChange(requestedFocus) {
+  const focusEl = document.getElementById("focus");
+
+  if (requestedFocus === state.activeFocus) {
+    return;
+  }
+
+  if (!practiceHasProgress()) {
+    state.activeFocus = requestedFocus;
+    newProblem();
+    return;
+  }
+
+  state.pendingFocus = requestedFocus;
+
+  // Restore the current selection while the student decides.
+  if (focusEl) {
+    focusEl.value = state.activeFocus;
+  }
+
+  const dialog = document.getElementById("modeChangeDialog");
+  const keepWorkingButton = document.getElementById("keepWorking");
+
+  if (dialog && typeof dialog.showModal === "function") {
+    dialog.showModal();
+
+    if (keepWorkingButton) {
+      keepWorkingButton.focus();
+    }
+
+    return;
+  }
+
+  // Graceful fallback if <dialog> is unavailable.
+  const shouldChange = window.confirm(
+    "Change practice focus?\n\nYour current problem and progress will be cleared."
+  );
+
+  if (shouldChange) {
+    confirmFocusChange();
+  } else {
+    cancelFocusChange();
+  }
+}
+
 async function init() {
   const res = await fetch("problems.json");
   DATA = await res.json();
@@ -708,9 +829,46 @@ async function init() {
   const topBtn = document.getElementById("newProblemTop");
   if (topBtn) topBtn.addEventListener("click", newProblem);
 
-  // If focus changes, generate a fresh problem immediately
+  // Practice-focus switching: warn only when work would be lost.
   const focusEl = document.getElementById("focus");
-  if (focusEl) focusEl.addEventListener("change", newProblem);
+
+  if (focusEl) {
+    state.activeFocus = focusEl.value;
+
+    focusEl.addEventListener("change", () => {
+      requestFocusChange(focusEl.value);
+    });
+  }
+
+  const keepWorkingButton =
+    document.getElementById("keepWorking");
+
+  if (keepWorkingButton) {
+    keepWorkingButton.addEventListener(
+      "click",
+      cancelFocusChange
+    );
+  }
+
+  const confirmModeChangeButton =
+    document.getElementById("confirmModeChange");
+
+  if (confirmModeChangeButton) {
+    confirmModeChangeButton.addEventListener(
+      "click",
+      confirmFocusChange
+    );
+  }
+
+  const modeChangeDialog =
+    document.getElementById("modeChangeDialog");
+
+  if (modeChangeDialog) {
+    modeChangeDialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      cancelFocusChange();
+    });
+  }
 
   updateStats();
   newProblem();
