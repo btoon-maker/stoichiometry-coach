@@ -376,6 +376,27 @@ select,
   text-underline-offset:3px;
 }
 
+
+/* ABOUT THIS TOOL — informational reference styling */
+
+.infoNote{
+  border-color:#7FAFD0;
+  border-left:4px solid #2F6F9F;
+  background:#F2F8FC;
+}
+
+.infoNote summary{
+  color:#245D84;
+}
+
+.infoNote[open]{
+  background:#F7FBFE;
+}
+
+.infoNote .long-description{
+  color:var(--gray-1);
+}
+
 .pathArea:not(:empty){
   margin-top:16px;
 }
