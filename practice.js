@@ -103,24 +103,118 @@ function weightedPickType(focus) {
   return choice(stoichTypes);                   // 60%
 }
 
+function pickConversionContext(type) {
+  const usesGasVolume = type.includes("_L");
+
+  const eligibleReactions = DATA.reactions
+    .map(rxn => {
+      const parsed = parseEquation(rxn.equation);
+      const allSpecies = [...parsed.reactants, ...parsed.products];
+      const eligibleSpecies = allSpecies.filter(item => {
+        if (!usesGasVolume) return true;
+        return rxn.species[item.sp]?.gasAtSTP === true;
+      });
+
+      return { rxn, parsed, eligibleSpecies };
+    })
+    .filter(item => item.eligibleSpecies.length > 0);
+
+  if (!eligibleReactions.length) {
+    throw new Error(`No eligible conversion species found for problem type: ${type}`);
+  }
+
+  const context = choice(eligibleReactions);
+  const single = choice(context.eligibleSpecies);
+
+  return {
+    rxn: context.rxn,
+    parsed: context.parsed,
+    single
+  };
+}
+
+function pickStoichiometryContext(type) {
+  const needsGasReactant =
+    type === "sto_L_to_g" || type === "sto_L_to_L";
+  const needsGasProduct =
+    type === "sto_g_to_L" || type === "sto_L_to_L";
+
+  const eligibleReactions = DATA.reactions
+    .map(rxn => {
+      const parsed = parseEquation(rxn.equation);
+
+      const eligibleReactants = parsed.reactants.filter(item => {
+        if (!needsGasReactant) return true;
+        return rxn.species[item.sp]?.gasAtSTP === true;
+      });
+
+      const eligibleProducts = parsed.products.filter(item => {
+        if (!needsGasProduct) return true;
+        return rxn.species[item.sp]?.gasAtSTP === true;
+      });
+
+      return {
+        rxn,
+        parsed,
+        eligibleReactants,
+        eligibleProducts
+      };
+    })
+    .filter(item =>
+      item.eligibleReactants.length > 0 &&
+      item.eligibleProducts.length > 0
+    );
+
+  if (!eligibleReactions.length) {
+    throw new Error(`No eligible stoichiometry species found for problem type: ${type}`);
+  }
+
+  const context = choice(eligibleReactions);
+
+  return {
+    rxn: context.rxn,
+    parsed: context.parsed,
+    react: choice(context.eligibleReactants),
+    prod: choice(context.eligibleProducts)
+  };
+}
+
 function pickProblem() {
   const focus = getFocus();
   const type = weightedPickType(focus);
+  const mode = type.startsWith("conv_") ? "conversion" : "stoich";
 
-  const rxn = DATA.reactions[rnd(0, DATA.reactions.length - 1)];
-  const parsed = parseEquation(rxn.equation);
+  let rxn;
+  let parsed;
+  let react;
+  let prod;
+  let single;
 
-  const react = parsed.reactants[rnd(0, parsed.reactants.length - 1)];
-  const prod = parsed.products[rnd(0, parsed.products.length - 1)];
+  if (mode === "conversion") {
+    const context = pickConversionContext(type);
+    rxn = context.rxn;
+    parsed = context.parsed;
+    single = context.single;
+
+    // These are carried on the problem object for shared helpers,
+    // but conversion problems use only the selected single species.
+    react = choice(parsed.reactants);
+    prod = choice(parsed.products);
+  } else {
+    const context = pickStoichiometryContext(type);
+    rxn = context.rxn;
+    parsed = context.parsed;
+    react = context.react;
+    prod = context.prod;
+
+    // Keep a single-species value available for the shared problem object.
+    single = choice([...parsed.reactants, ...parsed.products]);
+  }
 
   const mmReact = Number(rxn.species[react.sp].molarMass);
   const mmProd = Number(rxn.species[prod.sp].molarMass);
-
   const ratio = prod.coef / react.coef;
 
-  // For conversion problems, choose ONE species from anywhere
-  const allSpecies = [...parsed.reactants, ...parsed.products];
-  const single = choice(allSpecies);
   const sp = single.sp;
   const mmSingle = Number(rxn.species[sp].molarMass);
 
@@ -133,8 +227,7 @@ function pickProblem() {
   let prompt = "";
   let answer = 0;
 
-  // Also keep a mode so hints make sense
-  const mode = type.startsWith("conv_") ? "conversion" : "stoich";
+  // mode was set above so hints and feedback match the problem type.
 
   // --------------------
   // Conversion-only (same substance)
