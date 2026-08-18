@@ -97,6 +97,39 @@
     <span class="muted">Numbers are randomly generated from a safe bank of reactions.</span>
   </footer>
 
+
+  <dialog
+    id="modeChangeDialog"
+    class="confirmDialog"
+    aria-labelledby="modeChangeTitle"
+    aria-describedby="modeChangeDescription"
+  >
+    <div class="confirmDialogContent">
+      <h2 id="modeChangeTitle">Change practice focus?</h2>
+      <p id="modeChangeDescription">
+        Your current problem and progress will be cleared.
+      </p>
+
+      <div class="confirmDialogActions">
+        <button
+          type="button"
+          id="keepWorking"
+          class="btn primary"
+        >
+          Keep working
+        </button>
+
+        <button
+          type="button"
+          id="confirmModeChange"
+          class="btn"
+        >
+          Change practice focus
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <script src="practice.js"></script>
 </body>
 </html>
