@@ -126,7 +126,7 @@ h1{
 .subtitle{
   margin:3px 0 0;
   color:var(--white);
-  font-size:13px;
+  font-size:14px;
 }
 
 /* NAVIGATION */
@@ -149,7 +149,7 @@ h1{
   padding:8px 12px;
   border:1px solid rgba(255,255,255,.65);
   border-radius:12px;
-  font-size:13px;
+  font-size:14px;
   font-weight:700;
 }
 
@@ -208,7 +208,7 @@ h2{
 
 .muted{
   color:var(--muted-text);
-  font-size:13px;
+  font-size:14px;
 }
 
 .bullets{
@@ -234,7 +234,7 @@ label{
   display:block;
   margin:8px 0 6px;
   color:var(--gray-2);
-  font-size:13px;
+  font-size:14px;
 }
 
 .labelStrong{
@@ -328,7 +328,7 @@ select,
   min-height:38px;
   padding:7px 10px;
   border-radius:11px;
-  font-size:12px;
+  font-size:14px;
 }
 
 /* SHARED CONTENT ELEMENTS */
@@ -422,7 +422,7 @@ select,
   border:1px solid var(--control-border);
   border-radius:999px;
   background:var(--gray-7);
-  font-size:13px;
+  font-size:14px;
 }
 
 .steps{
@@ -574,7 +574,7 @@ select,
 
 .slotHint{
   color:var(--muted-text);
-  font-size:13px;
+  font-size:14px;
   font-weight:800;
   text-align:center;
 }
@@ -653,7 +653,7 @@ select,
   border:1px solid var(--control-border);
   border-radius:12px;
   background:var(--gray-7);
-  font-size:13px;
+  font-size:14px;
 }
 
 .bank{
@@ -708,7 +708,7 @@ select,
 
 .factorSelectHint{
   color:var(--primary);
-  font-size:12px;
+  font-size:14px;
   font-weight:800;
 }
 
@@ -862,7 +862,7 @@ select,
   }
 
   .subtitle{
-    font-size:12px;
+    font-size:14px;
   }
 
   .nav{
