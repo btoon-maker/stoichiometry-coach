@@ -546,8 +546,8 @@ select,
 }
 
 .givenBox{
-  width:150px;
-  min-width:150px;
+  width:210px;
+  min-width:210px;
   padding:10px;
   border:1px solid var(--control-border);
   border-radius:16px;
@@ -560,6 +560,23 @@ select,
   align-items:center;
   justify-content:center;
   gap:7px;
+}
+
+.givenBox .inlineNum{
+  display:grid;
+  grid-template-columns:minmax(70px,1fr) auto;
+  align-items:center;
+  gap:8px;
+}
+
+.givenBox .input.small{
+  width:100%;
+  max-width:none;
+  min-width:0;
+}
+
+.givenBox .unitTag{
+  max-width:100%;
 }
 
 .times{
